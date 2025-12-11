@@ -1388,9 +1388,23 @@ async function loadProjectFromServer(projectId) {
     projectLoadingInProgress = false;
   } catch (e) {
     console.error('❌ 加载项目失败:', e);
+    projectLoadingInProgress = false;
+    
+    // 检查是否是 404 错误（项目不存在）
+    if (e.message && e.message.includes('404')) {
+      // 清除无效的项目 ID
+      localStorage.removeItem('last_project_id');
+      
+      // 显示友好提示并引导用户
+      const goBack = confirm('项目不存在或已被删除。\n\n点击"确定"返回项目列表，点击"取消"留在当前页面。');
+      if (goBack) {
+        window.location.href = 'welcome-web.html';
+        return;
+      }
+    }
+    
     showNotification('❌ 加载项目失败: ' + e.message, 'error');
     showDefaultSky();
-    projectLoadingInProgress = false;
   }
 }
 
