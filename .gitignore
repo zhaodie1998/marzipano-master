@@ -12,8 +12,10 @@ package-lock.json
 /test/test_suite.js*
 .idea
 /pano-viewer/dist_app_v2/
+/pano-viewer/dist_app/
 *.exe
 *.dll
 *.pak
 *.bin
 node_modules/
+*.asar
