@@ -1,0 +1,89 @@
+{
+  "name": "全景编辑器 Pro - 专业版",
+  "short_name": "全景编辑器",
+  "description": "专业的360度全景图编辑器，支持EXR/HDR格式、热点编辑、场景链接",
+  "start_url": "/pano-viewer/index-pro.html",
+  "display": "standalone",
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "background_color": "#0a1628",
+  "theme_color": "#1890ff",
+  "icons": [
+    {
+      "src": "/pano-viewer/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pano-viewer/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "photo", "utilities"],
+  "shortcuts": [
+    {
+      "name": "新建项目",
+      "short_name": "新建",
+      "description": "创建新的全景项目",
+      "url": "/pano-viewer/index-pro.html?action=new",
+      "icons": [
+        {
+          "src": "/pano-viewer/icon-new.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "上传图片",
+      "short_name": "上传",
+      "description": "上传全景图片",
+      "url": "/pano-viewer/index-pro.html?action=upload",
+      "icons": [
+        {
+          "src": "/pano-viewer/icon-upload.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pano-viewer/screenshot-1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "全景编辑器主界面"
+    },
+    {
+      "src": "/pano-viewer/screenshot-2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "热点编辑功能"
+    }
+  ],
+  "share_target": {
+    "action": "/pano-viewer/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "panorama",
+          "accept": ["image/*", ".exr", ".hdr"]
+        }
+      ]
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/pano-viewer/index-pro.html",
+      "accept": {
+        "image/*": [".jpg", ".jpeg", ".png", ".webp"],
+        "image/x-exr": [".exr"],
+        "image/vnd.radiance": [".hdr"]
+      }
+    }
+  ]
+}

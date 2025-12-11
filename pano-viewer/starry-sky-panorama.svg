@@ -1,0 +1,164 @@
+<svg width="4096" height="2048" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="skyGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#0a1628;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0d1b2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#050a14;stop-opacity:1" />
+    </radialGradient>
+    
+    <radialGradient id="milkyWay" cx="50%" cy="30%">
+      <stop offset="0%" style="stop-color:#1a2842;stop-opacity:0.8" />
+      <stop offset="40%" style="stop-color:#0f1a2e;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#050a14;stop-opacity:0" />
+    </radialGradient>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- 背景渐变 -->
+  <rect width="4096" height="2048" fill="url(#skyGradient)"/>
+  
+  <!-- 银河系 -->
+  <ellipse cx="2048" cy="600" rx="1800" ry="400" fill="url(#milkyWay)" opacity="0.6"/>
+  
+  <!-- 大星星（带光晕） -->
+  <circle cx="512" cy="384" r="4" fill="#ffffff" filter="url(#glow)" opacity="0.95"/>
+  <circle cx="1024" cy="256" r="3.5" fill="#e8f4ff" filter="url(#glow)" opacity="0.92"/>
+  <circle cx="1536" cy="512" r="4.5" fill="#fff5e8" filter="url(#glow)" opacity="0.98"/>
+  <circle cx="2048" cy="192" r="5" fill="#ffffff" filter="url(#glow)"/>
+  <circle cx="2560" cy="448" r="3.8" fill="#e8f0ff" filter="url(#glow)" opacity="0.93"/>
+  <circle cx="3072" cy="320" r="4.2" fill="#fffae8" filter="url(#glow)" opacity="0.96"/>
+  <circle cx="3584" cy="576" r="3.6" fill="#ffffff" filter="url(#glow)" opacity="0.91"/>
+  
+  <circle cx="768" cy="768" r="3.2" fill="#fff8e8" filter="url(#glow)" opacity="0.89"/>
+  <circle cx="1280" cy="896" r="4.8" fill="#e8f2ff" filter="url(#glow)" opacity="0.97"/>
+  <circle cx="1792" cy="640" r="3.9" fill="#ffffff" filter="url(#glow)" opacity="0.94"/>
+  <circle cx="2304" cy="832" r="4.3" fill="#ffe8f0" filter="url(#glow)" opacity="0.95"/>
+  <circle cx="2816" cy="704" r="3.7" fill="#e8fffa" filter="url(#glow)" opacity="0.92"/>
+  <circle cx="3328" cy="960" r="4.1" fill="#ffffff" filter="url(#glow)" opacity="0.96"/>
+  <circle cx="3840" cy="768" r="3.5" fill="#fff0e8" filter="url(#glow)" opacity="0.90"/>
+  
+  <!-- 中等星星 -->
+  <circle cx="384" cy="512" r="2.5" fill="#ffffff" opacity="0.85"/>
+  <circle cx="896" cy="384" r="2.8" fill="#e8f4ff" opacity="0.88"/>
+  <circle cx="1152" cy="640" r="2.3" fill="#fff5e8" opacity="0.82"/>
+  <circle cx="1408" cy="448" r="2.9" fill="#ffffff" opacity="0.89"/>
+  <circle cx="1664" cy="768" r="2.4" fill="#e8f0ff" opacity="0.84"/>
+  <circle cx="1920" cy="320" r="3.1" fill="#fffae8" opacity="0.91"/>
+  <circle cx="2176" cy="576" r="2.6" fill="#ffffff" opacity="0.86"/>
+  <circle cx="2432" cy="896" r="2.7" fill="#fff8e8" opacity="0.87"/>
+  <circle cx="2688" cy="384" r="2.5" fill="#e8f2ff" opacity="0.85"/>
+  <circle cx="2944" cy="704" r="3.0" fill="#ffffff" opacity="0.90"/>
+  <circle cx="3200" cy="512" r="2.4" fill="#ffe8f0" opacity="0.83"/>
+  <circle cx="3456" cy="832" r="2.8" fill="#e8fffa" opacity="0.88"/>
+  <circle cx="3712" cy="448" r="2.6" fill="#ffffff" opacity="0.86"/>
+  
+  <circle cx="640" cy="1024" r="2.7" fill="#fff0e8" opacity="0.87"/>
+  <circle cx="1088" cy="1152" r="2.5" fill="#ffffff" opacity="0.85"/>
+  <circle cx="1344" cy="1280" r="2.9" fill="#e8f4ff" opacity="0.89"/>
+  <circle cx="1600" cy="1088" r="2.4" fill="#fff5e8" opacity="0.84"/>
+  <circle cx="1856" cy="1216" r="3.0" fill="#ffffff" opacity="0.90"/>
+  <circle cx="2112" cy="1152" r="2.6" fill="#e8f0ff" opacity="0.86"/>
+  <circle cx="2368" cy="1344" r="2.8" fill="#fffae8" opacity="0.88"/>
+  <circle cx="2624" cy="1088" r="2.5" fill="#ffffff" opacity="0.85"/>
+  <circle cx="2880" cy="1280" r="2.7" fill="#fff8e8" opacity="0.87"/>
+  <circle cx="3136" cy="1152" r="2.9" fill="#e8f2ff" opacity="0.89"/>
+  <circle cx="3392" cy="1344" r="2.4" fill="#ffffff" opacity="0.84"/>
+  <circle cx="3648" cy="1216" r="2.6" fill="#ffe8f0" opacity="0.86"/>
+  <circle cx="3904" cy="1088" r="2.8" fill="#e8fffa" opacity="0.88"/>
+  
+  <!-- 小星星（密集） -->
+  <circle cx="256" cy="192" r="1.5" fill="#ffffff" opacity="0.75"/>
+  <circle cx="320" cy="448" r="1.8" fill="#e8f4ff" opacity="0.78"/>
+  <circle cx="448" cy="320" r="1.6" fill="#fff5e8" opacity="0.76"/>
+  <circle cx="576" cy="256" r="1.7" fill="#ffffff" opacity="0.77"/>
+  <circle cx="704" cy="512" r="1.5" fill="#e8f0ff" opacity="0.75"/>
+  <circle cx="832" cy="576" r="1.9" fill="#fffae8" opacity="0.79"/>
+  <circle cx="960" cy="192" r="1.6" fill="#ffffff" opacity="0.76"/>
+  <circle cx="1088" cy="448" r="1.8" fill="#fff8e8" opacity="0.78"/>
+  <circle cx="1216" cy="384" r="1.5" fill="#e8f2ff" opacity="0.75"/>
+  <circle cx="1344" cy="576" r="1.7" fill="#ffffff" opacity="0.77"/>
+  <circle cx="1472" cy="256" r="1.6" fill="#ffe8f0" opacity="0.76"/>
+  <circle cx="1600" cy="512" r="1.9" fill="#e8fffa" opacity="0.79"/>
+  <circle cx="1728" cy="384" r="1.5" fill="#ffffff" opacity="0.75"/>
+  <circle cx="1856" cy="192" r="1.8" fill="#fff0e8" opacity="0.78"/>
+  <circle cx="1984" cy="448" r="1.6" fill="#ffffff" opacity="0.76"/>
+  <circle cx="2112" cy="320" r="1.7" fill="#e8f4ff" opacity="0.77"/>
+  <circle cx="2240" cy="576" r="1.5" fill="#fff5e8" opacity="0.75"/>
+  <circle cx="2368" cy="192" r="1.9" fill="#ffffff" opacity="0.79"/>
+  <circle cx="2496" cy="512" r="1.6" fill="#e8f0ff" opacity="0.76"/>
+  <circle cx="2624" cy="256" r="1.8" fill="#fffae8" opacity="0.78"/>
+  <circle cx="2752" cy="448" r="1.5" fill="#ffffff" opacity="0.75"/>
+  <circle cx="2880" cy="384" r="1.7" fill="#fff8e8" opacity="0.77"/>
+  <circle cx="3008" cy="576" r="1.6" fill="#e8f2ff" opacity="0.76"/>
+  <circle cx="3136" cy="192" r="1.9" fill="#ffffff" opacity="0.79"/>
+  <circle cx="3264" cy="448" r="1.5" fill="#ffe8f0" opacity="0.75"/>
+  <circle cx="3392" cy="320" r="1.8" fill="#e8fffa" opacity="0.78"/>
+  <circle cx="3520" cy="512" r="1.6" fill="#ffffff" opacity="0.76"/>
+  <circle cx="3648" cy="256" r="1.7" fill="#fff0e8" opacity="0.77"/>
+  <circle cx="3776" cy="384" r="1.5" fill="#ffffff" opacity="0.75"/>
+  <circle cx="3904" cy="576" r="1.9" fill="#e8f4ff" opacity="0.79"/>
+  
+  <!-- 下半部分星星 -->
+  <circle cx="192" cy="1280" r="1.6" fill="#ffffff" opacity="0.76"/>
+  <circle cx="448" cy="1408" r="1.8" fill="#fff5e8" opacity="0.78"/>
+  <circle cx="704" cy="1152" r="1.5" fill="#e8f0ff" opacity="0.75"/>
+  <circle cx="960" cy="1344" r="1.7" fill="#fffae8" opacity="0.77"/>
+  <circle cx="1216" cy="1472" r="1.9" fill="#ffffff" opacity="0.79"/>
+  <circle cx="1472" cy="1216" r="1.6" fill="#fff8e8" opacity="0.76"/>
+  <circle cx="1728" cy="1408" r="1.8" fill="#e8f2ff" opacity="0.78"/>
+  <circle cx="1984" cy="1152" r="1.5" fill="#ffffff" opacity="0.75"/>
+  <circle cx="2240" cy="1344" r="1.7" fill="#ffe8f0" opacity="0.77"/>
+  <circle cx="2496" cy="1280" r="1.6" fill="#e8fffa" opacity="0.76"/>
+  <circle cx="2752" cy="1472" r="1.9" fill="#ffffff" opacity="0.79"/>
+  <circle cx="3008" cy="1216" r="1.5" fill="#fff0e8" opacity="0.75"/>
+  <circle cx="3264" cy="1408" r="1.8" fill="#ffffff" opacity="0.78"/>
+  <circle cx="3520" cy="1152" r="1.6" fill="#e8f4ff" opacity="0.76"/>
+  <circle cx="3776" cy="1344" r="1.7" fill="#fff5e8" opacity="0.77"/>
+  
+  <circle cx="384" cy="1536" r="1.5" fill="#ffffff" opacity="0.75"/>
+  <circle cx="896" cy="1664" r="1.8" fill="#e8f0ff" opacity="0.78"/>
+  <circle cx="1408" cy="1600" r="1.6" fill="#fffae8" opacity="0.76"/>
+  <circle cx="1920" cy="1728" r="1.7" fill="#ffffff" opacity="0.77"/>
+  <circle cx="2432" cy="1536" r="1.9" fill="#fff8e8" opacity="0.79"/>
+  <circle cx="2944" cy="1664" r="1.5" fill="#e8f2ff" opacity="0.75"/>
+  <circle cx="3456" cy="1600" r="1.8" fill="#ffffff" opacity="0.78"/>
+  
+  <!-- 极小的装饰星星 -->
+  <circle cx="180" cy="360" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="420" cy="580" r="1" fill="#e8f4ff" opacity="0.6"/>
+  <circle cx="660" cy="220" r="1" fill="#fff5e8" opacity="0.6"/>
+  <circle cx="900" cy="470" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="1140" cy="310" r="1" fill="#e8f0ff" opacity="0.6"/>
+  <circle cx="1380" cy="550" r="1" fill="#fffae8" opacity="0.6"/>
+  <circle cx="1620" cy="210" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="1860" cy="460" r="1" fill="#fff8e8" opacity="0.6"/>
+  <circle cx="2100" cy="300" r="1" fill="#e8f2ff" opacity="0.6"/>
+  <circle cx="2340" cy="540" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="2580" cy="200" r="1" fill="#ffe8f0" opacity="0.6"/>
+  <circle cx="2820" cy="450" r="1" fill="#e8fffa" opacity="0.6"/>
+  <circle cx="3060" cy="290" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="3300" cy="530" r="1" fill="#fff0e8" opacity="0.6"/>
+  <circle cx="3540" cy="190" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="3780" cy="440" r="1" fill="#e8f4ff" opacity="0.6"/>
+  
+  <circle cx="240" cy="1120" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="720" cy="1360" r="1" fill="#fff5e8" opacity="0.6"/>
+  <circle cx="1200" cy="1240" r="1" fill="#e8f0ff" opacity="0.6"/>
+  <circle cx="1680" cy="1480" r="1" fill="#fffae8" opacity="0.6"/>
+  <circle cx="2160" cy="1120" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="2640" cy="1360" r="1" fill="#fff8e8" opacity="0.6"/>
+  <circle cx="3120" cy="1240" r="1" fill="#e8f2ff" opacity="0.6"/>
+  <circle cx="3600" cy="1480" r="1" fill="#ffffff" opacity="0.6"/>
+  
+  <circle cx="480" cy="1760" r="1" fill="#ffe8f0" opacity="0.6"/>
+  <circle cx="1440" cy="1840" r="1" fill="#e8fffa" opacity="0.6"/>
+  <circle cx="2400" cy="1760" r="1" fill="#ffffff" opacity="0.6"/>
+  <circle cx="3360" cy="1840" r="1" fill="#fff0e8" opacity="0.6"/>
+</svg>
