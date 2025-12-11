@@ -2,35 +2,389 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>登录 - 全景编辑器</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <style>
-    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#0f172a; color:#fff; }
-    .box { width: 360px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:24px; backdrop-filter: blur(6px); }
-    .box h1 { font-size:18px; margin:0 0 16px 0; }
-    .input { width:100%; margin-bottom:12px; }
-    .hint { color: #94a3b8; font-size:12px; margin-top:8px; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: #f1f5f9;
+      padding: 20px;
+    }
+    
+    /* 背景动画 */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: -1;
+    }
+    
+    .bg-animation::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 20% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 40% 40%, rgba(34, 197, 94, 0.05) 0%, transparent 40%);
+      animation: bgMove 20s ease-in-out infinite;
+    }
+    
+    @keyframes bgMove {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(-5%, -5%) rotate(5deg); }
+    }
+    
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .login-card {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 20px;
+      padding: 40px 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 32px;
+      box-shadow: 0 10px 30px -10px rgba(56, 189, 248, 0.5);
+    }
+    
+    .logo h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 8px;
+    }
+    
+    .logo p {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      font-size: 15px;
+      color: #f1f5f9;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    
+    .form-input::placeholder {
+      color: #64748b;
+    }
+    
+    .form-input:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+      background: rgba(15, 23, 42, 0.8);
+    }
+    
+    .form-input:hover:not(:focus) {
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+    
+    .btn-login {
+      width: 100%;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 8px;
+    }
+    
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px -10px rgba(56, 189, 248, 0.5);
+    }
+    
+    .btn-login:active {
+      transform: translateY(0);
+    }
+    
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: #64748b;
+      font-size: 13px;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(148, 163, 184, 0.2);
+    }
+    
+    .divider span {
+      padding: 0 16px;
+    }
+    
+    .hint-box {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+    
+    .hint-box strong {
+      color: #38bdf8;
+      font-weight: 500;
+    }
+    
+    .error-msg {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #fca5a5;
+      margin-bottom: 16px;
+      display: none;
+    }
+    
+    .error-msg.show {
+      display: block;
+      animation: shake 0.4s ease;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    /* 移动端适配 */
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 32px 24px;
+        border-radius: 16px;
+      }
+      
+      .logo-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
+      }
+      
+      .logo h1 {
+        font-size: 20px;
+      }
+    }
+    
+    /* 加载状态 */
+    .btn-login.loading {
+      position: relative;
+      color: transparent;
+    }
+    
+    .btn-login.loading::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      top: 50%;
+      left: 50%;
+      margin: -10px 0 0 -10px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
+</head>
+<body>
+  <div class="bg-animation"></div>
+  
+  <div class="login-container">
+    <div class="login-card">
+      <div class="logo">
+        <div class="logo-icon">🌐</div>
+        <h1>全景编辑器</h1>
+        <p>创建沉浸式全景体验</p>
+      </div>
+      
+      <div id="errorMsg" class="error-msg"></div>
+      
+      <form id="loginForm" onsubmit="return handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label" for="user">账号</label>
+          <input type="text" id="user" class="form-input" placeholder="请输入账号" autocomplete="username">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="pass">访问令牌</label>
+          <input type="password" id="pass" class="form-input" placeholder="请输入访问令牌" autocomplete="current-password">
+        </div>
+        
+        <button type="submit" id="loginBtn" class="btn-login">登录</button>
+      </form>
+      
+      <div class="divider"><span>提示</span></div>
+      
+      <div class="hint-box">
+        <strong>无需注册</strong>，使用管理员提供的访问令牌即可登录。<br>
+        令牌由服务端 <code>AUTH_TOKEN</code> 环境变量配置。
+      </div>
+    </div>
+  </div>
+  
   <script>
-    function login() {
+    // 检查是否已登录
+    (function() {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        // 验证 token 是否有效
+        fetch('/api/health', {
+          headers: { 'X-Auth-Token': token }
+        }).then(res => {
+          if (res.ok) {
+            window.location.href = 'welcome-web.html';
+          }
+        }).catch(() => {});
+      }
+    })();
+    
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+    
+    function handleLogin(e) {
+      e.preventDefault();
+      
       const user = document.getElementById('user').value.trim();
       const pass = document.getElementById('pass').value.trim();
-      if (!user || !pass) { alert('请输入账号与密码'); return; }
-      const token = pass; // 简化：使用密码作为令牌，与服务端 AUTH_TOKEN 一致即可
-      localStorage.setItem('auth_token', token);
-      window.location.href = 'welcome-web.html';
+      const btn = document.getElementById('loginBtn');
+      
+      if (!user) {
+        showError('请输入账号');
+        document.getElementById('user').focus();
+        return false;
+      }
+      
+      if (!pass) {
+        showError('请输入访问令牌');
+        document.getElementById('pass').focus();
+        return false;
+      }
+      
+      // 显示加载状态
+      btn.classList.add('loading');
+      btn.disabled = true;
+      
+      // 验证令牌
+      fetch('/api/projects', {
+        headers: { 'X-Auth-Token': pass }
+      }).then(res => {
+        if (res.ok || res.status === 200) {
+          // 保存令牌和用户名
+          localStorage.setItem('auth_token', pass);
+          localStorage.setItem('user_name', user);
+          window.location.href = 'welcome-web.html';
+        } else if (res.status === 401) {
+          showError('访问令牌无效，请检查后重试');
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        } else {
+          showError('服务器连接失败，请稍后重试');
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        }
+      }).catch(err => {
+        console.error('登录失败:', err);
+        showError('网络错误，请检查网络连接');
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      });
+      
+      return false;
     }
+    
+    // 回车提交
+    document.getElementById('pass').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+      }
+    });
   </script>
-  </head>
-<body>
-  <div class="box">
-    <h1>登录全景编辑器</h1>
-    <input id="user" class="input" placeholder="账号">
-    <input id="pass" class="input" type="password" placeholder="密码(令牌)">
-    <button class="btn btn-primary" style="width:100%" onclick="login()">登录</button>
-    <div class="hint">无需注册；管理员可在服务端设置 AUTH_TOKEN 后使用此令牌登录。</div>
-  </div>
 </body>
 </html>
-

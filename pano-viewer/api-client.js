@@ -69,7 +69,9 @@
     getAssetUrl(projectId, fileName) {
       if (!projectId || !fileName) return null;
       if (fileName.startsWith('data:') || fileName.startsWith('http') || fileName.startsWith('file:')) return fileName;
-      return `${BASE}/projects/${projectId}/assets/${encodeURIComponent(fileName)}`;
+      // 确保文件名正确编码（支持中文）
+      const encodedFileName = encodeURIComponent(fileName);
+      return `${BASE}/projects/${projectId}/assets/${encodedFileName}`;
     }
   };
 

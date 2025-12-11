@@ -8,13 +8,18 @@
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   const isTablet = /iPad|Android/i.test(navigator.userAgent) && window.innerWidth >= 768;
   const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
   
   console.log('📱 移动端检测:', {
     isMobile,
     isTablet,
     isTouchDevice,
+    isIOS,
+    isAndroid,
     screenWidth: window.innerWidth,
-    screenHeight: window.innerHeight
+    screenHeight: window.innerHeight,
+    pixelRatio: window.devicePixelRatio
   });
   
   // 等待DOM加载
@@ -25,6 +30,11 @@
   }
   
   function init() {
+    // 始终添加触摸设备类
+    if (isTouchDevice) {
+      document.body.classList.add('touch-device');
+    }
+    
     if (isMobile || isTouchDevice) {
       setupMobileUI();
       setupTouchGestures();
@@ -32,8 +42,70 @@
       setupOrientationChange();
       optimizeMobilePerformance();
       addMobileStyles();
+      setupPullToRefresh();
+      fixIOSInputZoom();
       console.log('✅ 移动端适配已启用');
     }
+  }
+  
+  // 修复 iOS 输入框缩放问题
+  function fixIOSInputZoom() {
+    if (!isIOS) return;
+    
+    // 防止输入框聚焦时页面缩放
+    const inputs = document.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+      input.style.fontSize = '16px'; // iOS 不会缩放 16px 及以上的输入框
+    });
+    
+    // 监听新添加的输入框
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) {
+            const newInputs = node.querySelectorAll ? node.querySelectorAll('input, textarea, select') : [];
+            newInputs.forEach(input => {
+              input.style.fontSize = '16px';
+            });
+            if (node.matches && node.matches('input, textarea, select')) {
+              node.style.fontSize = '16px';
+            }
+          }
+        });
+      });
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+  
+  // 下拉刷新（可选功能）
+  function setupPullToRefresh() {
+    // 仅在特定页面启用
+    if (!document.querySelector('.scene-list')) return;
+    
+    let startY = 0;
+    let pulling = false;
+    
+    document.addEventListener('touchstart', (e) => {
+      if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+        pulling = true;
+      }
+    }, { passive: true });
+    
+    document.addEventListener('touchmove', (e) => {
+      if (!pulling) return;
+      const currentY = e.touches[0].clientY;
+      const diff = currentY - startY;
+      
+      if (diff > 80 && window.scrollY === 0) {
+        showTouchHint('释放刷新');
+      }
+    }, { passive: true });
+    
+    document.addEventListener('touchend', () => {
+      pulling = false;
+    }, { passive: true });
   }
   
   // ==================== 移动端UI优化 ====================
@@ -454,25 +526,37 @@
     const style = document.createElement('style');
     style.id = 'mobileStyles';
     style.textContent = `
+      /* 触摸设备基础样式 */
+      .touch-device * {
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      .touch-device button,
+      .touch-device a,
+      .touch-device [role="button"] {
+        touch-action: manipulation;
+      }
+      
       /* 移动端菜单切换按钮 */
       .mobile-menu-toggle {
         display: none;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         padding: 0;
-        margin-right: 12px;
+        margin-right: 8px;
         background: transparent;
         border: none;
         color: var(--text-primary, #262626);
         cursor: pointer;
         align-items: center;
         justify-content: center;
-        border-radius: 6px;
+        border-radius: 8px;
         transition: background 0.2s;
       }
       
       .mobile-menu-toggle:active {
-        background: rgba(0,0,0,0.05);
+        background: rgba(0,0,0,0.08);
+        transform: scale(0.95);
       }
       
       /* 移动端遮罩 */
@@ -487,6 +571,8 @@
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.3s;
+        -webkit-backdrop-filter: blur(2px);
+        backdrop-filter: blur(2px);
       }
       
       .mobile-overlay.active {
@@ -497,7 +583,7 @@
       /* 侧边栏关闭按钮 */
       .sidebar-close-btn {
         display: none;
-        width: 36px;
+        width: 44px;
         height: 48px;
         background: transparent;
         border: none;
@@ -506,6 +592,11 @@
         cursor: pointer;
         padding: 0;
         margin-right: auto;
+        border-radius: 8px;
+      }
+      
+      .sidebar-close-btn:active {
+        background: rgba(0,0,0,0.05);
       }
       
       /* 底部操作栏 */
@@ -515,12 +606,12 @@
         bottom: 0;
         left: 0;
         right: 0;
-        height: 60px;
+        height: calc(60px + env(safe-area-inset-bottom, 0px));
         background: #ffffff;
         border-top: 1px solid #e8e8e8;
         z-index: 100;
-        padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-        box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
       }
       
       .bottom-bar-btn {
@@ -534,17 +625,26 @@
         border: none;
         color: #595959;
         cursor: pointer;
-        padding: 8px;
-        transition: color 0.2s;
+        padding: 8px 4px;
+        transition: all 0.15s;
+        border-radius: 8px;
+        margin: 4px 2px;
       }
       
       .bottom-bar-btn:active {
         color: #1890ff;
         background: rgba(24,144,255,0.1);
+        transform: scale(0.95);
+      }
+      
+      .bottom-bar-btn svg {
+        width: 22px;
+        height: 22px;
       }
       
       .bottom-bar-btn span {
-        font-size: 11px;
+        font-size: 10px;
+        font-weight: 500;
       }
       
       /* 触摸提示 */
@@ -555,19 +655,56 @@
         transform: translate(-50%, -50%) scale(0.8);
         background: rgba(0,0,0,0.85);
         color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 14px;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-size: 15px;
         font-weight: 500;
         z-index: 10000;
         opacity: 0;
         pointer-events: none;
-        transition: all 0.3s;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
       }
       
       .touch-hint.show {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
+      }
+      
+      /* 场景切换指示器 */
+      .scene-indicator {
+        position: fixed;
+        bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 6px;
+        padding: 8px 12px;
+        background: rgba(0,0,0,0.6);
+        border-radius: 20px;
+        z-index: 99;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+      
+      .scene-indicator.show {
+        opacity: 1;
+      }
+      
+      .scene-indicator-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.4);
+        transition: all 0.2s;
+      }
+      
+      .scene-indicator-dot.active {
+        background: #fff;
+        width: 18px;
+        border-radius: 3px;
       }
       
       /* 移动端适配 */
@@ -581,11 +718,12 @@
           left: -100%;
           top: 0;
           bottom: 0;
-          width: 80%;
+          width: 85%;
           max-width: 320px;
           z-index: 999;
-          transition: left 0.3s;
-          box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+          transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 4px 0 16px rgba(0,0,0,0.15);
+          will-change: left;
         }
         
         .sidebar.mobile-active {
@@ -600,8 +738,9 @@
           display: flex !important;
         }
         
-        .viewer-container {
-          padding-bottom: 60px;
+        .viewer-container,
+        #pano {
+          padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
         }
         
         /* 隐藏桌面端工具栏 */
@@ -618,19 +757,22 @@
         }
         
         .btn-primary {
-          width: 40px !important;
+          width: 44px !important;
+          height: 44px !important;
           padding: 0 !important;
           justify-content: center !important;
+          border-radius: 10px !important;
         }
         
         /* 优化上传区域 */
         .upload-zone {
           margin: 12px;
-          padding: 20px;
+          padding: 24px 16px;
+          border-radius: 12px;
         }
         
         .upload-title {
-          font-size: 13px;
+          font-size: 14px;
         }
         
         .upload-desc {
@@ -644,20 +786,26 @@
         /* 优化场景项 */
         .scene-item {
           margin-bottom: 12px;
+          border-radius: 10px;
         }
         
         .scene-list {
           padding: 12px;
         }
         
+        .scene-thumbnail {
+          border-radius: 8px;
+        }
+        
         /* 优化标签页 */
         .tab-btn {
           font-size: 11px;
+          padding: 10px 8px;
         }
         
         .tab-btn svg {
-          width: 18px;
-          height: 18px;
+          width: 20px;
+          height: 20px;
         }
         
         /* 触摸友好的尺寸 */
@@ -666,16 +814,83 @@
           min-width: 44px;
           min-height: 44px;
         }
+        
+        /* 模态框优化 */
+        .modal-content,
+        .modal-box {
+          margin: 16px;
+          max-height: calc(100vh - 32px);
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        
+        /* 输入框优化 */
+        input, textarea, select {
+          font-size: 16px !important; /* 防止 iOS 缩放 */
+        }
+        
+        /* 热点优化 */
+        .hotspot {
+          transform: scale(1.2);
+        }
+        
+        .hotspot-circle {
+          width: 44px;
+          height: 44px;
+        }
+      }
+      
+      /* 小屏手机适配 */
+      @media (max-width: 374px) {
+        .bottom-bar-btn span {
+          font-size: 9px;
+        }
+        
+        .bottom-bar-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+        
+        .sidebar {
+          width: 90%;
+        }
       }
       
       /* 平板适配 */
       @media (min-width: 768px) and (max-width: 1024px) {
         .sidebar {
-          width: 260px;
+          width: 280px;
+        }
+        
+        .scene-item {
+          margin-bottom: 16px;
         }
       }
       
-      /* 安全区域适配（刘海屏） */
+      /* 横屏模式 */
+      @media (max-height: 500px) and (orientation: landscape) {
+        .mobile-bottom-bar {
+          height: 50px;
+          padding-bottom: 0;
+        }
+        
+        .bottom-bar-btn {
+          flex-direction: row;
+          gap: 6px;
+        }
+        
+        .bottom-bar-btn svg {
+          width: 18px;
+          height: 18px;
+        }
+        
+        .sidebar {
+          width: 50%;
+          max-width: 280px;
+        }
+      }
+      
+      /* 安全区域适配（刘海屏/药丸屏） */
       @supports (padding: env(safe-area-inset-top)) {
         .top-nav {
           padding-top: env(safe-area-inset-top);
@@ -688,6 +903,38 @@
         
         .sidebar {
           padding-top: env(safe-area-inset-top);
+          padding-left: env(safe-area-inset-left);
+        }
+        
+        .mobile-bottom-bar {
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+        }
+      }
+      
+      /* 深色模式支持 */
+      @media (prefers-color-scheme: dark) {
+        .mobile-bottom-bar {
+          background: #1a1a1a;
+          border-top-color: #333;
+        }
+        
+        .bottom-bar-btn {
+          color: #999;
+        }
+        
+        .bottom-bar-btn:active {
+          background: rgba(24,144,255,0.2);
+        }
+      }
+      
+      /* 减少动画（无障碍） */
+      @media (prefers-reduced-motion: reduce) {
+        .sidebar,
+        .mobile-overlay,
+        .touch-hint,
+        .bottom-bar-btn {
+          transition: none !important;
         }
       }
     `;

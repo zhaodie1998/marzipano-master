@@ -66,7 +66,7 @@ async function ensureThreeAndEXR() {
 const EXRDecoder = {
   // 检查是否为 EXR 文件
   isEXRFile(filename) {
-    return \/\.exr$\/i.test(filename);
+    return /\.exr$/i.test(filename);
   },
   _worker: null,
   _reqId: 0,

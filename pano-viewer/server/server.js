@@ -67,10 +67,19 @@ const storage = multer.diskStorage({
     }
   },
   filename: (req, file, cb) => {
-    // 保留原始文件名，添加时间戳避免冲突
-    const ext = path.extname(file.originalname);
-    const name = path.basename(file.originalname, ext);
-    const safeName = name.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5-]/g, '_');
+    // 正确解码中文文件名 (处理 multer 的 latin1 编码问题)
+    let originalName = file.originalname;
+    try {
+      // 尝试从 latin1 转换为 utf8
+      originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    } catch (e) {
+      // 如果转换失败，保持原样
+    }
+    
+    const ext = path.extname(originalName);
+    const name = path.basename(originalName, ext);
+    // 保留中文字符，只替换特殊字符
+    const safeName = name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
     const timestamp = Date.now();
     cb(null, `${safeName}_${timestamp}${ext}`);
   }
@@ -255,12 +264,20 @@ app.post('/api/projects/:projectId/upload', upload.array('images', 50), (req, re
       return res.status(400).json({ error: '没有上传文件' });
     }
     
-    const results = files.map(file => ({
-      originalName: file.originalname,
-      fileName: file.filename,
-      url: `/projects/${projectId}/assets/${file.filename}`,
-      size: file.size
-    }));
+    const results = files.map(file => {
+      // 正确解码原始文件名
+      let originalName = file.originalname;
+      try {
+        originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+      } catch (e) {}
+      
+      return {
+        originalName: originalName,
+        fileName: file.filename,
+        url: `/projects/${projectId}/assets/${encodeURIComponent(file.filename)}`,
+        size: file.size
+      };
+    });
     
     res.json({ success: true, files: results });
   } catch (error) {
