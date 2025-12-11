@@ -265,6 +265,17 @@
 
 <script src="api-client.js"></script>
 <script>
+  // 若未登录但服务端启用令牌，可引导到登录页
+  (function(){
+    const needAuth = false; // 前端无法判断，保留扩展位
+    if (needAuth) {
+      if (!localStorage.getItem('auth_token')) {
+        window.location.replace('login.html');
+      }
+    }
+  })();
+</script>
+<script>
 
 // 加载项目列表
 async function loadProjects() {

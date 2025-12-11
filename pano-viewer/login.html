@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - 全景编辑器</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#0f172a; color:#fff; }
+    .box { width: 360px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:24px; backdrop-filter: blur(6px); }
+    .box h1 { font-size:18px; margin:0 0 16px 0; }
+    .input { width:100%; margin-bottom:12px; }
+    .hint { color: #94a3b8; font-size:12px; margin-top:8px; }
+  </style>
+  <script>
+    function login() {
+      const user = document.getElementById('user').value.trim();
+      const pass = document.getElementById('pass').value.trim();
+      if (!user || !pass) { alert('请输入账号与密码'); return; }
+      const token = pass; // 简化：使用密码作为令牌，与服务端 AUTH_TOKEN 一致即可
+      localStorage.setItem('auth_token', token);
+      window.location.href = 'welcome-web.html';
+    }
+  </script>
+  </head>
+<body>
+  <div class="box">
+    <h1>登录全景编辑器</h1>
+    <input id="user" class="input" placeholder="账号">
+    <input id="pass" class="input" type="password" placeholder="密码(令牌)">
+    <button class="btn btn-primary" style="width:100%" onclick="login()">登录</button>
+    <div class="hint">无需注册；管理员可在服务端设置 AUTH_TOKEN 后使用此令牌登录。</div>
+  </div>
+</body>
+</html>
+

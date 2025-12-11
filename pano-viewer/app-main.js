@@ -85,19 +85,20 @@ function initApp() {
       }
     }, 100);
   } else if (isWebServer) {
-    // Web 服务端模式：从 URL 参数获取项目 ID
     const urlParams = new URLSearchParams(window.location.search);
-    const projectId = urlParams.get('project');
-    
-    if (projectId) {
-      console.log('Loading project from server:', projectId);
-      currentProjectId = projectId;
-      loadProjectFromServer(projectId);
-    } else {
-      // 没有项目参数，显示默认场景或跳转到项目列表
-      console.log('⚠ 未指定项目，显示默认场景');
-      showDefaultSky();
+    let projectId = urlParams.get('project');
+    if (!projectId) {
+      const last = localStorage.getItem('last_project_id');
+      if (last) {
+        window.location.replace(`index.html?project=${last}`);
+        return;
+      }
+      window.location.replace('welcome-web.html');
+      return;
     }
+    console.log('Loading project from server:', projectId);
+    currentProjectId = projectId;
+    loadProjectFromServer(projectId);
   } else {
     // 纯前端模式：从 localStorage 加载
     loadProject();
@@ -1144,6 +1145,7 @@ async function saveProject() {
       if (result.success) {
         console.log('✅ 项目已保存到服务器:', projectData.scenes.map(s => s.imageFile));
         showNotification('✅ 项目已保存');
+        if (currentProjectId) localStorage.setItem('last_project_id', currentProjectId);
       } else {
         showNotification('❌ 保存失败', 'error');
       }
