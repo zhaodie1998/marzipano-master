@@ -520,6 +520,7 @@ async function applyEXRSettings() {
 async function rebuildSceneTexture(sceneData, newImageData) {
   return new Promise((resolve) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const aspectRatio = img.width / img.height;
       let geometry;
@@ -583,6 +584,7 @@ function createScene(imageData, filename, switchTo = false, options = {}) {
     const source = Marzipano.ImageUrlSource.fromString(imageData);
     
     const img = new Image();
+    img.crossOrigin = 'anonymous'; // 支持跨域加载
     img.onload = () => {
       const aspectRatio = img.width / img.height;
       let geometry;
@@ -1251,6 +1253,7 @@ async function loadProjectFromDisk(projectPath) {
         // 创建场景对象
         await new Promise((resolve) => {
           const img = new Image();
+          img.crossOrigin = 'anonymous';
           img.onload = () => {
             const aspectRatio = img.width / img.height;
             let geometry;
@@ -1375,6 +1378,7 @@ async function loadProjectFromServer(projectId) {
             
             // 使用解码后的 dataURL 创建场景
             const img = new Image();
+            img.crossOrigin = 'anonymous';
             await new Promise((resolve, reject) => {
               img.onload = resolve;
               img.onerror = reject;
@@ -1414,6 +1418,7 @@ async function loadProjectFromServer(projectId) {
           // 普通图片文件
           await new Promise((resolve) => {
             const img = new Image();
+            img.crossOrigin = 'anonymous'; // 支持跨域加载
             img.onload = () => {
               const aspectRatio = img.width / img.height;
               let geometry;

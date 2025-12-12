@@ -54,7 +54,12 @@ const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 });
 
 // 中间件
-app.use(cors());
+app.use(cors({
+  origin: true, // 允许所有来源
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'X-Auth-Token', 'Authorization']
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -76,10 +81,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// 静态文件服务
-app.use(express.static(path.join(__dirname, '..')));
-app.use('/uploads', express.static(UPLOADS_DIR));
-app.use('/projects', express.static(PROJECTS_DIR));
+// 静态文件服务 - 添加 CORS 头支持移动端
+const staticOptions = {
+  setHeaders: (res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+};
+app.use(express.static(path.join(__dirname, '..'), staticOptions));
+app.use('/uploads', express.static(UPLOADS_DIR, staticOptions));
+app.use('/projects', express.static(PROJECTS_DIR, staticOptions));
 
 // Multer 配置 - 图片上传
 const storage = multer.diskStorage({

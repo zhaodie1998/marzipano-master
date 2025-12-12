@@ -599,19 +599,20 @@
         background: rgba(0,0,0,0.05);
       }
       
-      /* 底部操作栏 */
+      /* 底部操作栏 - 深色主题匹配 */
       .mobile-bottom-bar {
         display: none;
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        height: calc(60px + env(safe-area-inset-bottom, 0px));
-        background: #ffffff;
-        border-top: 1px solid #e8e8e8;
+        height: calc(56px + env(safe-area-inset-bottom, 0px));
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(255,255,255,0.1);
         z-index: 100;
         padding-bottom: env(safe-area-inset-bottom, 0px);
-        box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
       }
       
       .bottom-bar-btn {
@@ -620,30 +621,30 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 4px;
+        gap: 3px;
         background: transparent;
         border: none;
-        color: #595959;
+        color: rgba(255,255,255,0.7);
         cursor: pointer;
-        padding: 8px 4px;
+        padding: 6px 4px;
         transition: all 0.15s;
         border-radius: 8px;
         margin: 4px 2px;
       }
       
       .bottom-bar-btn:active {
-        color: #1890ff;
-        background: rgba(24,144,255,0.1);
+        color: #60a5fa;
+        background: rgba(96,165,250,0.15);
         transform: scale(0.95);
       }
       
       .bottom-bar-btn svg {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
       }
       
       .bottom-bar-btn span {
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 500;
       }
       
@@ -713,21 +714,8 @@
           display: flex !important;
         }
         
-        .sidebar {
-          position: fixed;
-          left: -100%;
-          top: 0;
-          bottom: 0;
-          width: 85%;
-          max-width: 320px;
-          z-index: 999;
-          transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 4px 0 16px rgba(0,0,0,0.15);
-          will-change: left;
-        }
-        
         .sidebar.mobile-active {
-          left: 0;
+          transform: translateX(0) !important;
         }
         
         .sidebar-close-btn {
@@ -738,74 +726,9 @@
           display: flex !important;
         }
         
-        .viewer-container,
-        #pano {
-          padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
-        }
-        
-        /* 隐藏桌面端工具栏 */
-        .nav-center {
-          display: none !important;
-        }
-        
-        .nav-right .btn-text {
-          display: none !important;
-        }
-        
-        .btn-primary span {
-          display: none !important;
-        }
-        
-        .btn-primary {
-          width: 44px !important;
-          height: 44px !important;
-          padding: 0 !important;
-          justify-content: center !important;
-          border-radius: 10px !important;
-        }
-        
-        /* 优化上传区域 */
-        .upload-zone {
-          margin: 12px;
-          padding: 24px 16px;
-          border-radius: 12px;
-        }
-        
-        .upload-title {
-          font-size: 14px;
-        }
-        
-        .upload-desc {
-          font-size: 12px;
-        }
-        
-        .upload-tips {
-          font-size: 11px;
-        }
-        
-        /* 优化场景项 */
-        .scene-item {
-          margin-bottom: 12px;
-          border-radius: 10px;
-        }
-        
-        .scene-list {
-          padding: 12px;
-        }
-        
-        .scene-thumbnail {
-          border-radius: 8px;
-        }
-        
-        /* 优化标签页 */
-        .tab-btn {
-          font-size: 11px;
-          padding: 10px 8px;
-        }
-        
-        .tab-btn svg {
-          width: 20px;
-          height: 20px;
+        /* 控制栏位置调整，避开底部栏 */
+        .control-bar {
+          bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
         }
         
         /* 触摸友好的尺寸 */
@@ -815,120 +738,59 @@
           min-height: 44px;
         }
         
-        /* 模态框优化 */
-        .modal-content,
-        .modal-box {
-          margin: 16px;
-          max-height: calc(100vh - 32px);
-          overflow-y: auto;
-          -webkit-overflow-scrolling: touch;
-        }
-        
-        /* 输入框优化 */
+        /* 输入框优化 - 防止 iOS 缩放 */
         input, textarea, select {
-          font-size: 16px !important; /* 防止 iOS 缩放 */
+          font-size: 16px !important;
         }
         
         /* 热点优化 */
         .hotspot {
-          transform: scale(1.2);
-        }
-        
-        .hotspot-circle {
-          width: 44px;
-          height: 44px;
+          transform: scale(1.15);
         }
       }
       
       /* 小屏手机适配 */
       @media (max-width: 374px) {
         .bottom-bar-btn span {
-          font-size: 9px;
+          font-size: 8px;
         }
-        
         .bottom-bar-btn svg {
-          width: 20px;
-          height: 20px;
-        }
-        
-        .sidebar {
-          width: 90%;
-        }
-      }
-      
-      /* 平板适配 */
-      @media (min-width: 768px) and (max-width: 1024px) {
-        .sidebar {
-          width: 280px;
-        }
-        
-        .scene-item {
-          margin-bottom: 16px;
+          width: 18px;
+          height: 18px;
         }
       }
       
       /* 横屏模式 */
       @media (max-height: 500px) and (orientation: landscape) {
         .mobile-bottom-bar {
-          height: 50px;
+          height: 48px;
           padding-bottom: 0;
         }
-        
         .bottom-bar-btn {
           flex-direction: row;
-          gap: 6px;
+          gap: 4px;
         }
-        
         .bottom-bar-btn svg {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
         }
-        
-        .sidebar {
-          width: 50%;
-          max-width: 280px;
+        .bottom-bar-btn span {
+          font-size: 10px;
+        }
+        .control-bar {
+          bottom: 56px !important;
         }
       }
       
-      /* 安全区域适配（刘海屏/药丸屏） */
-      @supports (padding: env(safe-area-inset-top)) {
-        .top-nav {
-          padding-top: env(safe-area-inset-top);
-          height: calc(56px + env(safe-area-inset-top));
-        }
-        
-        .main-container {
-          top: calc(56px + env(safe-area-inset-top));
-        }
-        
-        .sidebar {
-          padding-top: env(safe-area-inset-top);
-          padding-left: env(safe-area-inset-left);
-        }
-        
+      /* 安全区域适配 */
+      @supports (padding: env(safe-area-inset-bottom)) {
         .mobile-bottom-bar {
           padding-left: env(safe-area-inset-left);
           padding-right: env(safe-area-inset-right);
         }
       }
       
-      /* 深色模式支持 */
-      @media (prefers-color-scheme: dark) {
-        .mobile-bottom-bar {
-          background: #1a1a1a;
-          border-top-color: #333;
-        }
-        
-        .bottom-bar-btn {
-          color: #999;
-        }
-        
-        .bottom-bar-btn:active {
-          background: rgba(24,144,255,0.2);
-        }
-      }
-      
-      /* 减少动画（无障碍） */
+      /* 减少动画 */
       @media (prefers-reduced-motion: reduce) {
         .sidebar,
         .mobile-overlay,
