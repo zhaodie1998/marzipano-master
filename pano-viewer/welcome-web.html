@@ -2,19 +2,20 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>全景编辑器 - 项目管理</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       min-height: 100vh;
       color: white;
       padding: 20px;
-      padding-bottom: env(safe-area-inset-bottom, 20px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     
     .container {
@@ -27,74 +28,44 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 0;
+      padding: 20px 0;
       border-bottom: 1px solid rgba(255,255,255,0.1);
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-    
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      margin-bottom: 30px;
     }
     
     .header h1 {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-    
-    .logo-icon {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-    
-    .header-actions {
-      display: flex;
       gap: 12px;
-      align-items: center;
+      margin: 0;
     }
     
-    .user-info {
-      font-size: 13px;
-      color: rgba(255,255,255,0.6);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .header h1 svg {
+      width: 32px;
+      height: 32px;
+      fill: #3b82f6;
     }
     
     .btn {
       padding: 10px 20px;
-      border-radius: 10px;
+      border-radius: 8px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
       font-size: 14px;
       border: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       color: white;
-      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
     }
     
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
     
     .btn-secondary {
@@ -107,21 +78,10 @@
       background: rgba(255,255,255,0.15);
     }
     
-    .btn-logout {
-      background: transparent;
-      color: rgba(255,255,255,0.5);
-      padding: 8px 12px;
-    }
-    
-    .btn-logout:hover {
-      color: #f87171;
-    }
-    
-    /* 项目网格 */
     .project-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+      gap: 24px;
     }
     
     .project-card {
@@ -137,12 +97,8 @@
     .project-card:hover {
       background: rgba(255,255,255,0.08);
       transform: translateY(-4px);
-      border-color: rgba(56, 189, 248, 0.5);
+      border-color: rgba(59, 130, 246, 0.5);
       box-shadow: 0 12px 32px rgba(0,0,0,0.3);
-    }
-    
-    .project-card:active {
-      transform: translateY(-2px);
     }
     
     .project-thumb {
@@ -150,7 +106,6 @@
       aspect-ratio: 16/9;
       background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
       object-fit: cover;
-      display: block;
     }
     
     .project-info {
@@ -158,19 +113,16 @@
     }
     
     .project-info h3 {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
       margin: 0 0 8px 0;
       color: rgba(255,255,255,0.95);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     
     .project-meta {
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
+      font-size: 13px;
       color: rgba(255,255,255,0.5);
     }
     
@@ -196,51 +148,14 @@
     .project-card:hover .delete-btn { opacity: 1; }
     .delete-btn:hover { background: #ef4444; transform: scale(1.1); }
     
-    /* 新建项目卡片 */
-    .new-project-card {
-      background: rgba(56, 189, 248, 0.1);
-      border: 2px dashed rgba(56, 189, 248, 0.3);
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 200px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
-    
-    .new-project-card:hover {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: rgba(56, 189, 248, 0.5);
-      transform: translateY(-4px);
-    }
-    
-    .new-project-card .icon {
-      width: 56px;
-      height: 56px;
-      background: rgba(56, 189, 248, 0.2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      margin-bottom: 12px;
-    }
-    
-    .new-project-card span {
-      font-size: 14px;
-      color: rgba(255,255,255,0.7);
-    }
-    
     .empty-state {
       text-align: center;
-      padding: 60px 20px;
+      padding: 80px 20px;
       color: rgba(255,255,255,0.4);
       grid-column: 1 / -1;
     }
     
-    .empty-state .icon {
+    .empty-state p:first-child {
       font-size: 48px;
       margin-bottom: 16px;
     }
@@ -250,63 +165,33 @@
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(4px);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      padding: 20px;
     }
     
     .modal.show { display: flex; }
     
     .modal-box {
       background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-      padding: 28px;
-      border-radius: 20px;
-      width: 100%;
-      max-width: 420px;
+      padding: 28px 32px;
+      border-radius: 16px;
+      width: 400px;
+      max-width: 90vw;
       border: 1px solid rgba(255,255,255,0.1);
       box-shadow: 0 24px 48px rgba(0,0,0,0.5);
-      animation: modalIn 0.3s ease;
     }
     
-    @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.95) translateY(10px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    
-    .modal-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    
-    .modal-header .icon {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-    }
-    
-    .modal-header h2 {
+    .modal-box h2 {
+      margin: 0 0 24px 0;
       font-size: 18px;
       font-weight: 600;
     }
     
-    .modal-header p {
-      font-size: 13px;
-      color: rgba(255,255,255,0.5);
-      margin-top: 4px;
-    }
-    
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     
     .form-group label {
@@ -314,35 +199,23 @@
       font-size: 13px;
       color: rgba(255,255,255,0.6);
       margin-bottom: 8px;
-      font-weight: 500;
     }
     
     .form-group input {
       width: 100%;
-      padding: 14px 16px;
+      padding: 12px 14px;
       border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 12px;
+      border-radius: 8px;
       background: rgba(0,0,0,0.3);
       color: white;
-      font-size: 15px;
+      font-size: 14px;
       transition: all 0.2s;
-    }
-    
-    .form-group input::placeholder {
-      color: rgba(255,255,255,0.3);
     }
     
     .form-group input:focus {
       outline: none;
-      border-color: #38bdf8;
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
-      background: rgba(0,0,0,0.4);
-    }
-    
-    .form-hint {
-      font-size: 12px;
-      color: rgba(255,255,255,0.4);
-      margin-top: 8px;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
     
     .modal-actions {
@@ -357,453 +230,190 @@
       padding: 40px;
       color: rgba(255,255,255,0.6);
     }
-    
-    .loading-spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: #38bdf8;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 12px;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    /* 移动端适配 */
-    @media (max-width: 640px) {
-      body {
-        padding: 16px;
-      }
-      
-      .header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-      }
-      
-      .header-left {
-        justify-content: center;
-      }
-      
-      .header-actions {
-        justify-content: center;
-      }
-      
-      .header h1 {
-        font-size: 18px;
-      }
-      
-      .project-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 16px;
-      }
-      
-      .delete-btn {
-        opacity: 1;
-        width: 28px;
-        height: 28px;
-      }
-      
-      .modal-box {
-        padding: 24px 20px;
-      }
-      
-      .btn {
-        padding: 12px 20px;
-      }
-    }
-    
-    /* 触摸设备优化 */
-    @media (hover: none) {
-      .delete-btn {
-        opacity: 1;
-      }
-      
-      .project-card:hover {
-        transform: none;
-      }
-      
-      .project-card:active {
-        transform: scale(0.98);
-      }
-    }
   </style>
 </head>
 <body>
 
 <div class="container">
   <div class="header">
-    <div class="header-left">
-      <h1>
-        <div class="logo-icon">🌐</div>
-        全景编辑器
-      </h1>
-    </div>
-    <div class="header-actions">
-      <span class="user-info" id="userInfo"></span>
-      <button class="btn btn-primary" onclick="showCreateModal()">
-        <span>+</span> 新建项目
-      </button>
-      <button class="btn btn-secondary" onclick="showPasswordModal()" title="修改密码">🔑 修改密码</button>
-      <button class="btn btn-logout" onclick="logout()" title="退出登录">退出</button>
+    <h1>
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+      全景编辑器
+    </h1>
+    <div>
+      <button class="btn btn-secondary" onclick="relogin()">重新登录</button>
+      <button class="btn btn-primary" onclick="showCreateModal()">+ 新建项目</button>
     </div>
   </div>
   
   <div class="project-grid" id="projectGrid">
-    <div class="loading">
-      <div class="loading-spinner"></div>
-      加载中...
-    </div>
+    <div class="loading">加载中...</div>
   </div>
 </div>
 
 <!-- Create Modal -->
 <div class="modal" id="createModal">
   <div class="modal-box">
-    <div class="modal-header">
-      <div class="icon">📁</div>
-      <div>
-        <h2>创建新项目</h2>
-        <p>开始创建您的全景漫游</p>
-      </div>
-    </div>
+    <h2>创建新项目</h2>
     <div class="form-group">
-      <label for="projectName">项目名称</label>
-      <input type="text" id="projectName" placeholder="例如：展厅全景、样板间漫游" maxlength="50" autocomplete="off">
-      <div class="form-hint">支持中文、英文、数字，最多50个字符</div>
+      <label>项目名称</label>
+      <input type="text" id="projectName" placeholder="输入项目名称">
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="hideCreateModal()">取消</button>
-      <button class="btn btn-primary" id="createBtn" onclick="createProject()">创建项目</button>
-    </div>
-  </div>
-</div>
-
-<!-- Password Modal -->
-<div class="modal" id="passwordModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <div class="icon">🔑</div>
-      <div>
-        <h2>修改密码</h2>
-        <p>请输入当前密码和新密码</p>
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="oldPassword">当前密码</label>
-      <input type="password" id="oldPassword" placeholder="请输入当前密码" autocomplete="current-password">
-    </div>
-    <div class="form-group">
-      <label for="newPassword">新密码</label>
-      <input type="password" id="newPassword" placeholder="请输入新密码（至少4位）" autocomplete="new-password">
-    </div>
-    <div class="form-group">
-      <label for="confirmPassword">确认新密码</label>
-      <input type="password" id="confirmPassword" placeholder="请再次输入新密码" autocomplete="new-password">
-    </div>
-    <div id="passwordError" style="color:#f87171;font-size:13px;margin-bottom:12px;display:none;"></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="hidePasswordModal()">取消</button>
-      <button class="btn btn-primary" id="changePasswordBtn" onclick="changePassword()">确认修改</button>
+      <button class="btn btn-primary" onclick="createProject()">创建</button>
     </div>
   </div>
 </div>
 
 <script src="api-client.js"></script>
 <script>
-  // 检查登录状态
-  (function() {
-    const token = localStorage.getItem('auth_token');
-    const userName = localStorage.getItem('user_name');
-    
-    // 显示用户信息
-    const userInfo = document.getElementById('userInfo');
-    if (userName) {
-      userInfo.textContent = `👤 ${userName}`;
-    }
-  })();
-  
-  function logout() {
-    if (confirm('确定要退出登录吗？')) {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_name');
-      localStorage.removeItem('last_project_id');
-      window.location.href = 'login.html';
-    }
-  }
-
-  window.showPasswordModal = function() {
-    document.getElementById('passwordModal').classList.add('show');
-    document.getElementById('oldPassword').value = '';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('confirmPassword').value = '';
-    document.getElementById('passwordError').style.display = 'none';
-    setTimeout(() => document.getElementById('oldPassword').focus(), 100);
-  };
-
-  window.hidePasswordModal = function() {
-    document.getElementById('passwordModal').classList.remove('show');
-  };
-
-  window.changePassword = async function() {
-    const oldPwd = document.getElementById('oldPassword').value;
-    const newPwd = document.getElementById('newPassword').value;
-    const confirmPwd = document.getElementById('confirmPassword').value;
-    const errorEl = document.getElementById('passwordError');
-    const btn = document.getElementById('changePasswordBtn');
-
-    errorEl.style.display = 'none';
-
-    if (!oldPwd) {
-      errorEl.textContent = '请输入当前密码';
-      errorEl.style.display = 'block';
-      return;
-    }
-    if (!newPwd || newPwd.length < 4) {
-      errorEl.textContent = '新密码至少4位';
-      errorEl.style.display = 'block';
-      return;
-    }
-    if (newPwd !== confirmPwd) {
-      errorEl.textContent = '两次输入的新密码不一致';
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = '修改中...';
-
+  // 根据服务端是否要求令牌进行跳转
+  (async function(){
     try {
-      const token = localStorage.getItem('auth_token');
-      const res = await fetch('/api/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Auth-Token': token
-        },
-        body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd })
-      });
-      const data = await res.json();
-
-      if (res.ok && data.token) {
-        localStorage.setItem('auth_token', data.token);
-        alert('密码修改成功！');
-        hidePasswordModal();
-      } else {
-        errorEl.textContent = data.error || '修改失败';
-        errorEl.style.display = 'block';
+      const info = await apiClient.getAuthInfo();
+      if (info && info.requireToken && !localStorage.getItem('auth_token')) {
+        window.location.replace('login.html');
       }
-    } catch (e) {
-      errorEl.textContent = '网络错误，请重试';
-      errorEl.style.display = 'block';
-    }
+    } catch {}
+  })();
+</script>
+<script>
 
-    btn.disabled = false;
-    btn.textContent = '确认修改';
-  };
-
-  document.getElementById('passwordModal').addEventListener('click', (e) => {
-    if (e.target.id === 'passwordModal') hidePasswordModal();
-  });
-
-  // 加载项目列表
-  async function loadProjects() {
-    const grid = document.getElementById('projectGrid');
+// 加载项目列表
+async function loadProjects() {
+  const grid = document.getElementById('projectGrid');
+  
+  try {
+    const projects = await apiClient.getProjects();
     
-    try {
-      const projects = await apiClient.getProjects();
-      
-      // 始终显示新建项目卡片
-      let html = `
-        <div class="new-project-card" onclick="showCreateModal()">
-          <div class="icon">➕</div>
-          <span>新建项目</span>
+    if (projects.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <p>📁</p>
+          <p>暂无项目</p>
+          <p>点击右上角「新建项目」开始创作</p>
         </div>
       `;
-      
-      if (projects.length === 0) {
-        html += `
-          <div class="empty-state">
-            <div class="icon">📁</div>
-            <p>暂无项目</p>
-            <p style="margin-top:8px;font-size:13px;">点击「新建项目」开始创作</p>
-          </div>
-        `;
-      } else {
-        html += projects.map(p => `
-          <div class="project-card" onclick="openProject('${p.id}')">
-            <button class="delete-btn" onclick="deleteProject(event, '${p.id}')" title="删除项目">✕</button>
-            <img src="${p.thumbnail || 'favicon.svg'}" class="project-thumb" onerror="this.src='favicon.svg'" alt="${escapeHtml(p.name)}">
-            <div class="project-info">
-              <h3 title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</h3>
-              <div class="project-meta">
-                <span>${p.sceneCount || 0} 个场景</span>
-                <span>${formatDate(p.lastModified)}</span>
-              </div>
-            </div>
-          </div>
-        `).join('');
-      }
-      
-      grid.innerHTML = html;
-    } catch (e) {
-      console.error('加载项目失败:', e);
-      
-      // 检查是否是认证错误
-      if (e.message && e.message.includes('401')) {
-        grid.innerHTML = `
-          <div class="empty-state">
-            <div class="icon">🔒</div>
-            <p>登录已过期</p>
-            <p style="margin-top:12px;">
-              <button class="btn btn-primary" onclick="window.location.href='login.html'">重新登录</button>
-            </p>
-          </div>
-        `;
-      } else {
-        grid.innerHTML = `
-          <div class="empty-state">
-            <div class="icon">❌</div>
-            <p>加载失败</p>
-            <p style="margin-top:8px;font-size:13px;">${escapeHtml(e.message || '请检查网络连接')}</p>
-            <p style="margin-top:12px;">
-              <button class="btn btn-secondary" onclick="loadProjects()">重试</button>
-            </p>
-          </div>
-        `;
-      }
-    }
-  }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  function formatDate(timestamp) {
-    if (!timestamp) return '';
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now - date;
-    
-    // 今天
-    if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
-      return '今天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    // 昨天
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth()) {
-      return '昨天';
-    }
-    
-    // 一周内
-    if (diff < 7 * 24 * 60 * 60 * 1000) {
-      const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-      return days[date.getDay()];
-    }
-    
-    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-  }
-
-  window.showCreateModal = function() {
-    document.getElementById('createModal').classList.add('show');
-    const input = document.getElementById('projectName');
-    input.value = '';
-    setTimeout(() => input.focus(), 100);
-  };
-
-  window.hideCreateModal = function() {
-    document.getElementById('createModal').classList.remove('show');
-  };
-
-  window.createProject = async function() {
-    const input = document.getElementById('projectName');
-    const name = input.value.trim();
-    const btn = document.getElementById('createBtn');
-    
-    if (!name) {
-      input.focus();
-      input.style.borderColor = '#f87171';
-      setTimeout(() => input.style.borderColor = '', 2000);
       return;
     }
     
-    // 验证名称
-    if (/[<>:"/\\|?*]/.test(name)) {
-      alert('项目名称不能包含特殊字符: < > : " / \\ | ? *');
-      return;
+    grid.innerHTML = projects.map(p => `
+      <div class="project-card" onclick="openProject('${p.id}')">
+        <button class="delete-btn" onclick="deleteProject(event, '${p.id}')">✕</button>
+        <img src="${p.thumbnail || 'favicon.svg'}" class="project-thumb" onerror="this.src='favicon.svg'">
+        <div class="project-info">
+          <h3>${escapeHtml(p.name)}</h3>
+          <div class="project-meta">
+            <span>${p.sceneCount || 0} 个场景</span>
+            <span>${formatDate(p.lastModified)}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error(e);
+    grid.innerHTML = '<div class="empty-state"><p>❌</p><p>加载失败</p></div>';
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diff = now - date;
+  
+  if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
+    return '今天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  }
+  
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth()) {
+    return '昨天';
+  }
+  
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+}
+
+window.showCreateModal = function() {
+  document.getElementById('createModal').classList.add('show');
+  const input = document.getElementById('projectName');
+  input.value = '';
+  setTimeout(() => input.focus(), 100);
+};
+
+window.hideCreateModal = function() {
+  document.getElementById('createModal').classList.remove('show');
+};
+
+window.relogin = function() {
+  try { localStorage.removeItem('auth_token'); } catch {}
+  window.location.href = 'login.html';
+};
+
+window.createProject = async function() {
+  const name = document.getElementById('projectName').value.trim();
+  if (!name) {
+    document.getElementById('projectName').focus();
+    return;
+  }
+  
+  if (/[<>:"/\\|?*]/.test(name)) {
+    alert('项目名称不能包含特殊字符');
+    return;
+  }
+  
+  try {
+    const result = await apiClient.createProject(name);
+    if (result.success) {
+      hideCreateModal();
+      window.location.href = `index.html?project=${result.project.id}`;
     }
-    
-    // 显示加载状态
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0"></span> 创建中...';
-    
-    try {
-      const result = await apiClient.createProject(name);
-      if (result.success) {
-        hideCreateModal();
-        // 保存最后打开的项目
-        localStorage.setItem('last_project_id', result.project.id);
-        window.location.href = `index.html?project=${result.project.id}`;
-      }
-    } catch (e) {
-      alert('创建失败: ' + (e.message || '未知错误'));
-      btn.disabled = false;
-      btn.innerHTML = '创建项目';
-    }
-  };
+  } catch (e) {
+    alert('创建失败: ' + e.message);
+  }
+};
 
-  window.openProject = function(projectId) {
-    localStorage.setItem('last_project_id', projectId);
-    window.location.href = `index.html?project=${projectId}`;
-  };
+window.openProject = function(projectId) {
+  window.location.href = `index.html?project=${projectId}`;
+};
 
-  window.deleteProject = async function(e, projectId) {
-    e.stopPropagation();
-    if (!confirm('确定要删除这个项目吗？\n\n⚠️ 此操作不可恢复，所有场景和数据将被永久删除。')) return;
-    
-    try {
-      await apiClient.deleteProject(projectId);
-      // 如果删除的是最后打开的项目，清除记录
-      if (localStorage.getItem('last_project_id') === projectId) {
-        localStorage.removeItem('last_project_id');
-      }
-      loadProjects();
-    } catch (e) {
-      alert('删除失败: ' + (e.message || '未知错误'));
-    }
-  };
+window.deleteProject = async function(e, projectId) {
+  e.stopPropagation();
+  if (!confirm('确定要删除这个项目吗？\n此操作不可恢复。')) return;
+  
+  try {
+    await apiClient.deleteProject(projectId);
+    loadProjects();
+  } catch (e) {
+    alert('删除失败: ' + e.message);
+  }
+};
 
-  // 键盘事件
-  document.getElementById('projectName').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      window.createProject();
-    }
-  });
+// 键盘事件
+document.getElementById('projectName').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    window.createProject();
+  }
+});
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') hideCreateModal();
-    // Ctrl/Cmd + N 新建项目
-    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-      e.preventDefault();
-      showCreateModal();
-    }
-  });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') hideCreateModal();
+});
 
-  document.getElementById('createModal').addEventListener('click', (e) => {
-    if (e.target.id === 'createModal') hideCreateModal();
-  });
+document.getElementById('createModal').addEventListener('click', (e) => {
+  if (e.target.id === 'createModal') hideCreateModal();
+});
 
-  // 初始化
-  loadProjects();
+// 初始化
+loadProjects();
 </script>
 
 </body>
