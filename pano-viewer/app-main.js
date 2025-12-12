@@ -575,17 +575,29 @@ function showDependencies() {
 
 /**
  * 创建场景 - 返回 Promise 以支持异步等待
+ * 移动端兼容优化
  */
 function createScene(imageData, filename, switchTo = false, options = {}) {
   return new Promise((resolve, reject) => {
     const sceneId = 'scene_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     const sceneName = filename.replace(/\.[^/.]+$/, '');
     
-    const source = Marzipano.ImageUrlSource.fromString(imageData);
+    // 移动端兼容：使用带 crossOrigin 选项的 source
+    const source = Marzipano.ImageUrlSource.fromString(imageData, { crossOrigin: 'anonymous' });
     
     const img = new Image();
-    img.crossOrigin = 'anonymous'; // 支持跨域加载
+    // 移动端关键：必须先设置 crossOrigin，再设置 src
+    img.crossOrigin = 'anonymous';
+    
+    // 添加超时处理（移动端网络可能较慢）
+    const timeout = setTimeout(() => {
+      console.warn(`⚠ 图片加载超时: ${sceneName}`);
+      showNotification(`⚠ 加载超时: ${sceneName}`, 'warning');
+      reject(new Error(`图片加载超时: ${sceneName}`));
+    }, 30000); // 30秒超时
+    
     img.onload = () => {
+      clearTimeout(timeout);
       const aspectRatio = img.width / img.height;
       let geometry;
       
@@ -635,6 +647,7 @@ function createScene(imageData, filename, switchTo = false, options = {}) {
     };
     
     img.onerror = (err) => {
+      clearTimeout(timeout);
       console.error('Failed to load image:', imageData, err);
       showNotification(`❌ 图片加载失败: ${sceneName}`, 'error');
       reject(new Error(`图片加载失败: ${sceneName}`));
@@ -1415,44 +1428,93 @@ async function loadProjectFromServer(projectId) {
             showNotification(`❌ EXR 加载失败: ${s.name}`, 'error');
           }
         } else {
-          // 普通图片文件
-          await new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous'; // 支持跨域加载
-            img.onload = () => {
-              const aspectRatio = img.width / img.height;
-              let geometry;
-              if (aspectRatio > 1.8 && aspectRatio < 2.2) {
-                geometry = new Marzipano.EquirectGeometry([{ width: 4096 }]);
-              } else {
-                geometry = new Marzipano.CubeGeometry([{ tileSize: 1024, size: 1024 }]);
+          // 普通图片文件 - 移动端兼容处理
+          // 使用 fetch + blob 方式加载，避免跨域问题
+          try {
+            console.log(`📥 正在加载图片: ${imageUrl}`);
+            
+            // 先尝试使用 fetch 获取图片（更可靠的跨域处理）
+            let finalImageUrl = imageUrl;
+            let useBlobUrl = false;
+            
+            // 检测是否为移动端
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+              try {
+                const response = await fetch(imageUrl, {
+                  mode: 'cors',
+                  credentials: 'omit'
+                });
+                
+                if (response.ok) {
+                  const blob = await response.blob();
+                  finalImageUrl = URL.createObjectURL(blob);
+                  useBlobUrl = true;
+                  console.log(`📱 移动端使用 Blob URL 加载: ${s.name}`);
+                }
+              } catch (fetchErr) {
+                console.warn(`⚠ Fetch 失败，回退到直接加载: ${fetchErr.message}`);
               }
-              const limiter = Marzipano.RectilinearView.limit.traditional(4096, 120 * Math.PI / 180);
-              const view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: 90 * Math.PI / 180 }, limiter);
-              const source = Marzipano.ImageUrlSource.fromString(imageUrl);
-              const scene = appState.viewer.createScene({ source, geometry, view, pinFirstLevel: true });
+            }
+            
+            await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.crossOrigin = 'anonymous';
               
-              const sceneData = {
-                id: s.id,
-                name: s.name,
-                imageData: imageUrl,
-                fileName: fileName,
-                scene: scene,
-                view: view,
-                hotspots: s.hotspots || [],
-                thumbnail: imageUrl
+              const timeout = setTimeout(() => {
+                console.warn(`⚠ 图片加载超时: ${s.name}`);
+                if (useBlobUrl) URL.revokeObjectURL(finalImageUrl);
+                showNotification(`⚠ 加载超时: ${s.name}`, 'warning');
+                resolve();
+              }, 30000);
+              
+              img.onload = () => {
+                clearTimeout(timeout);
+                const aspectRatio = img.width / img.height;
+                let geometry;
+                if (aspectRatio > 1.8 && aspectRatio < 2.2) {
+                  geometry = new Marzipano.EquirectGeometry([{ width: 4096 }]);
+                } else {
+                  geometry = new Marzipano.CubeGeometry([{ tileSize: 1024, size: 1024 }]);
+                }
+                const limiter = Marzipano.RectilinearView.limit.traditional(4096, 120 * Math.PI / 180);
+                const view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: 90 * Math.PI / 180 }, limiter);
+                
+                // 使用最终的图片 URL（可能是 blob URL）
+                const source = Marzipano.ImageUrlSource.fromString(finalImageUrl);
+                const scene = appState.viewer.createScene({ source, geometry, view, pinFirstLevel: true });
+                
+                const sceneData = {
+                  id: s.id,
+                  name: s.name,
+                  imageData: imageUrl, // 保存原始 URL 用于保存项目
+                  fileName: fileName,
+                  scene: scene,
+                  view: view,
+                  hotspots: s.hotspots || [],
+                  thumbnail: finalImageUrl, // 缩略图使用实际加载的 URL
+                  _blobUrl: useBlobUrl ? finalImageUrl : null // 记录 blob URL 以便后续清理
+                };
+                appState.scenes.push(sceneData);
+                console.log(`✅ 场景已加载: ${s.name}`);
+                resolve();
               };
-              appState.scenes.push(sceneData);
-              console.log(`✅ 场景已加载: ${s.name}`);
-              resolve();
-            };
-            img.onerror = (err) => {
-              console.error(`❌ 图片加载失败: ${imageUrl}`, err);
-              showNotification(`❌ 加载失败: ${s.name}`, 'error');
-              resolve();
-            };
-            img.src = imageUrl;
-          });
+              
+              img.onerror = (err) => {
+                clearTimeout(timeout);
+                if (useBlobUrl) URL.revokeObjectURL(finalImageUrl);
+                console.error(`❌ 图片加载失败: ${imageUrl}`, err);
+                showNotification(`❌ 加载失败: ${s.name}`, 'error');
+                resolve();
+              };
+              
+              img.src = finalImageUrl;
+            });
+          } catch (loadErr) {
+            console.error(`❌ 加载场景失败: ${s.name}`, loadErr);
+            showNotification(`❌ 加载失败: ${s.name}`, 'error');
+          }
         }
       }
       

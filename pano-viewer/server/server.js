@@ -81,13 +81,32 @@ app.use((req, res, next) => {
   next();
 });
 
-// 静态文件服务 - 添加 CORS 头支持移动端
+// 静态文件服务 - 添加完整 CORS 头支持移动端
 const staticOptions = {
-  setHeaders: (res) => {
+  setHeaders: (res, filePath) => {
     res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Range');
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Cross-Origin-Embedder-Policy', 'credentialless');
+    
+    // 为图片文件添加缓存控制
+    const ext = path.extname(filePath).toLowerCase();
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext)) {
+      res.set('Cache-Control', 'public, max-age=31536000'); // 1年缓存
+    }
   }
 };
+
+// 处理 OPTIONS 预检请求
+app.options('*', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, X-Auth-Token, Authorization, Range');
+  res.set('Access-Control-Max-Age', '86400'); // 24小时
+  res.sendStatus(204);
+});
+
 app.use(express.static(path.join(__dirname, '..'), staticOptions));
 app.use('/uploads', express.static(UPLOADS_DIR, staticOptions));
 app.use('/projects', express.static(PROJECTS_DIR, staticOptions));

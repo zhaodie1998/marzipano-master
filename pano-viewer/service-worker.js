@@ -64,6 +64,27 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
+  // 项目资源（图片）使用网络优先策略，确保移动端能正确加载
+  if (url.pathname.includes('/projects/') && url.pathname.includes('/assets/')) {
+    event.respondWith(
+      fetch(request, { mode: 'cors', credentials: 'omit' })
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          console.log('[Service Worker] 网络失败，尝试缓存:', url.pathname);
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+  
   // 只处理同源请求
   if (url.origin !== location.origin) {
     // CDN资源使用网络优先策略

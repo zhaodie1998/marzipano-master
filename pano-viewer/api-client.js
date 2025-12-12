@@ -69,9 +69,37 @@
     getAssetUrl(projectId, fileName) {
       if (!projectId || !fileName) return null;
       if (fileName.startsWith('data:') || fileName.startsWith('http') || fileName.startsWith('file:')) return fileName;
-      // 确保文件名正确编码（支持中文）
+      
+      // 确保文件名正确编码（支持中文和特殊字符）
       const encodedFileName = encodeURIComponent(fileName);
-      return `${BASE}/projects/${projectId}/assets/${encodedFileName}`;
+      
+      // 构建完整 URL（移动端需要绝对路径）
+      const baseUrl = window.location.origin;
+      const url = `${baseUrl}${BASE}/projects/${projectId}/assets/${encodedFileName}`;
+      
+      console.log(`📎 资源 URL: ${url}`);
+      return url;
+    },
+    
+    // 移动端图片预加载（使用 fetch + blob）
+    async preloadImage(url) {
+      try {
+        const response = await fetch(url, {
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'force-cache'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+      } catch (err) {
+        console.error('预加载图片失败:', url, err);
+        return url; // 回退到原始 URL
+      }
     }
   };
 
