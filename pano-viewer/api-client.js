@@ -83,17 +83,49 @@
       const form = new FormData();
       files.forEach(f => form.append('images', f, f.name));
       const token = localStorage.getItem('auth_token');
-      const controller = new AbortController();
-      const res = await fetch(`${BASE}/api/projects/${projectId}/upload`, {
-        method: 'POST',
-        headers: token ? { 'X-Auth-Token': token } : undefined,
-        body: form,
-        signal: controller.signal
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const json = await res.json();
-      if (onProgress) onProgress(100);
-      return json;
+      
+      // 上传使用更长的超时和重试机制
+      let lastError;
+      const maxRetries = 3;
+      
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          if (onProgress && attempt > 0) {
+            onProgress(0); // 重试时重置进度
+          }
+          
+          console.log(`📤 上传尝试 ${attempt + 1}/${maxRetries}...`);
+          
+          const res = await fetch(`${BASE}/api/projects/${projectId}/upload`, {
+            method: 'POST',
+            headers: token ? { 'X-Auth-Token': token } : undefined,
+            body: form
+            // 不设置超时，让大文件有足够时间上传
+          });
+          
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(errText || `HTTP ${res.status}`);
+          }
+          
+          const json = await res.json();
+          if (onProgress) onProgress(100);
+          console.log(`✅ 上传成功`);
+          return json;
+        } catch (err) {
+          lastError = err;
+          console.warn(`⚠ 上传失败 (${attempt + 1}/${maxRetries}):`, err.message);
+          
+          // 等待后重试
+          if (attempt < maxRetries - 1) {
+            const waitTime = 2000 * (attempt + 1);
+            console.log(`⏳ ${waitTime/1000}秒后重试...`);
+            await new Promise(r => setTimeout(r, waitTime));
+          }
+        }
+      }
+      
+      throw lastError;
     },
 
     getAssetUrl(projectId, fileName) {
