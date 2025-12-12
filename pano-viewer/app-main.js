@@ -347,11 +347,36 @@ async function handleFileSelect(e) {
         const fileInfo = result.files[i];
         const imageUrl = fileInfo.url;
         const name = fileInfo.originalName;
+        const fileName = fileInfo.fileName;
         
-        await createScene(imageUrl, name, i === 0, {
-          isServerAsset: true,
-          fileName: fileInfo.fileName
-        });
+        // 检查是否为 EXR 文件
+        const isEXR = window.EXRDecoder && window.EXRDecoder.isEXRFile(fileName);
+        
+        if (isEXR) {
+          // EXR 文件需要下载并解码
+          try {
+            setProgress(60 + Math.round((i + 0.3) / result.files.length * 35), `解码 EXR: ${name}`);
+            const response = await fetch(imageUrl);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const arrayBuffer = await response.arrayBuffer();
+            const dataURL = await window.EXRDecoder.renderEXRFromBuffer(arrayBuffer);
+            
+            await createScene(dataURL, name, i === 0, {
+              isServerAsset: true,
+              fileName: fileName,
+              exrBuffer: arrayBuffer
+            });
+          } catch (err) {
+            console.error(`❌ EXR 解码失败: ${name}`, err);
+            showNotification(`❌ EXR 解码失败: ${name}`, 'error');
+          }
+        } else {
+          // 普通图片
+          await createScene(imageUrl, name, i === 0, {
+            isServerAsset: true,
+            fileName: fileName
+          });
+        }
         
         setProgress(60 + Math.round((i + 1) / result.files.length * 35), `创建场景 ${i + 1}/${result.files.length}`);
       }
@@ -1334,10 +1359,28 @@ async function loadProjectFromServer(projectId) {
           continue;
         }
         
-        // 创建场景对象
-        await new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
+        // 检查是否为 EXR 文件
+        const isEXR = window.EXRDecoder && window.EXRDecoder.isEXRFile(fileName);
+        
+        if (isEXR) {
+          // EXR 文件需要特殊处理：先下载，再解码
+          try {
+            console.log(`🔄 正在加载 EXR 文件: ${fileName}`);
+            const response = await fetch(imageUrl);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            const arrayBuffer = await response.arrayBuffer();
+            const dataURL = await window.EXRDecoder.renderEXRFromBuffer(arrayBuffer);
+            
+            // 使用解码后的 dataURL 创建场景
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = reject;
+              img.src = dataURL;
+            });
+            
             const aspectRatio = img.width / img.height;
             let geometry;
             if (aspectRatio > 1.8 && aspectRatio < 2.2) {
@@ -1347,30 +1390,65 @@ async function loadProjectFromServer(projectId) {
             }
             const limiter = Marzipano.RectilinearView.limit.traditional(4096, 120 * Math.PI / 180);
             const view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: 90 * Math.PI / 180 }, limiter);
-            const source = Marzipano.ImageUrlSource.fromString(imageUrl);
+            const source = Marzipano.ImageUrlSource.fromString(dataURL);
             const scene = appState.viewer.createScene({ source, geometry, view, pinFirstLevel: true });
             
             const sceneData = {
               id: s.id,
               name: s.name,
-              imageData: imageUrl,
+              imageData: dataURL,
               fileName: fileName,
               scene: scene,
               view: view,
               hotspots: s.hotspots || [],
-              thumbnail: imageUrl
+              thumbnail: dataURL,
+              exrBuffer: arrayBuffer
             };
             appState.scenes.push(sceneData);
-            console.log(`✅ 场景已加载: ${s.name}`);
-            resolve();
-          };
-          img.onerror = (err) => {
-            console.error(`❌ 图片加载失败: ${imageUrl}`, err);
-            showNotification(`❌ 加载失败: ${s.name}`, 'error');
-            resolve();
-          };
-          img.src = imageUrl;
-        });
+            console.log(`✅ EXR 场景已加载: ${s.name}`);
+          } catch (err) {
+            console.error(`❌ EXR 加载失败: ${fileName}`, err);
+            showNotification(`❌ EXR 加载失败: ${s.name}`, 'error');
+          }
+        } else {
+          // 普通图片文件
+          await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              const aspectRatio = img.width / img.height;
+              let geometry;
+              if (aspectRatio > 1.8 && aspectRatio < 2.2) {
+                geometry = new Marzipano.EquirectGeometry([{ width: 4096 }]);
+              } else {
+                geometry = new Marzipano.CubeGeometry([{ tileSize: 1024, size: 1024 }]);
+              }
+              const limiter = Marzipano.RectilinearView.limit.traditional(4096, 120 * Math.PI / 180);
+              const view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: 90 * Math.PI / 180 }, limiter);
+              const source = Marzipano.ImageUrlSource.fromString(imageUrl);
+              const scene = appState.viewer.createScene({ source, geometry, view, pinFirstLevel: true });
+              
+              const sceneData = {
+                id: s.id,
+                name: s.name,
+                imageData: imageUrl,
+                fileName: fileName,
+                scene: scene,
+                view: view,
+                hotspots: s.hotspots || [],
+                thumbnail: imageUrl
+              };
+              appState.scenes.push(sceneData);
+              console.log(`✅ 场景已加载: ${s.name}`);
+              resolve();
+            };
+            img.onerror = (err) => {
+              console.error(`❌ 图片加载失败: ${imageUrl}`, err);
+              showNotification(`❌ 加载失败: ${s.name}`, 'error');
+              resolve();
+            };
+            img.src = imageUrl;
+          });
+        }
       }
       
       updateSceneList();
