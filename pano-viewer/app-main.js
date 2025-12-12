@@ -214,6 +214,14 @@ function bindEvents() {
   if (minimapBtn) minimapBtn.addEventListener('click', toggleMinimap);
   document.getElementById('settingsBtn').addEventListener('click', togglePropertiesPanel);
   document.getElementById('closePanelBtn').addEventListener('click', togglePropertiesPanel);
+  const moreBtn = document.getElementById('bottomMoreBtn');
+  if (moreBtn) {
+    moreBtn.addEventListener('click', () => {
+      const bar = document.getElementById('controlBar');
+      if (!bar) return;
+      bar.classList.toggle('mobile-advanced-hidden');
+    });
+  }
   const saveBtn = document.getElementById('saveBtn');
   if (saveBtn) saveBtn.addEventListener('click', saveProject);
   const exportBtn = document.getElementById('exportBtn');
@@ -303,12 +311,16 @@ function bindEvents() {
 function setupMobileUI() {
   const isMobile = window.matchMedia('(max-width: 768px)').matches || /Mobi|Android|iPhone/i.test(navigator.userAgent);
   const setVh = () => {
-    const vh = window.innerHeight * 0.01;
+    const base = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+    const vh = base * 0.01;
     document.documentElement.style.setProperty('--app-vh', `${vh}px`);
   };
   setVh();
   window.addEventListener('resize', setVh);
   window.addEventListener('orientationchange', setVh);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', setVh);
+  }
   if (isMobile) {
     const sidebar = document.getElementById('sidebar');
     if (sidebar && !sidebar.classList.contains('collapsed')) sidebar.classList.add('collapsed');
@@ -316,8 +328,10 @@ function setupMobileUI() {
     if (panel && panel.classList.contains('show')) panel.classList.remove('show');
     const overlay = document.getElementById('sceneTitleOverlay');
     if (overlay) {
-      overlay.style.top = '72px';
+      overlay.style.top = 'calc(72px + env(safe-area-inset-top))';
     }
+    const bar = document.getElementById('controlBar');
+    if (bar) bar.classList.add('mobile-advanced-hidden');
   }
 }
 
