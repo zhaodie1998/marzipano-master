@@ -447,6 +447,7 @@
       <button class="btn btn-primary" onclick="showCreateModal()">
         <span>+</span> 新建项目
       </button>
+      <button class="btn btn-secondary" onclick="showPasswordModal()" title="修改密码">🔑 修改密码</button>
       <button class="btn btn-logout" onclick="logout()" title="退出登录">退出</button>
     </div>
   </div>
@@ -481,6 +482,36 @@
   </div>
 </div>
 
+<!-- Password Modal -->
+<div class="modal" id="passwordModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="icon">🔑</div>
+      <div>
+        <h2>修改密码</h2>
+        <p>请输入当前密码和新密码</p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="oldPassword">当前密码</label>
+      <input type="password" id="oldPassword" placeholder="请输入当前密码" autocomplete="current-password">
+    </div>
+    <div class="form-group">
+      <label for="newPassword">新密码</label>
+      <input type="password" id="newPassword" placeholder="请输入新密码（至少4位）" autocomplete="new-password">
+    </div>
+    <div class="form-group">
+      <label for="confirmPassword">确认新密码</label>
+      <input type="password" id="confirmPassword" placeholder="请再次输入新密码" autocomplete="new-password">
+    </div>
+    <div id="passwordError" style="color:#f87171;font-size:13px;margin-bottom:12px;display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="hidePasswordModal()">取消</button>
+      <button class="btn btn-primary" id="changePasswordBtn" onclick="changePassword()">确认修改</button>
+    </div>
+  </div>
+</div>
+
 <script src="api-client.js"></script>
 <script>
   // 检查登录状态
@@ -503,6 +534,80 @@
       window.location.href = 'login.html';
     }
   }
+
+  window.showPasswordModal = function() {
+    document.getElementById('passwordModal').classList.add('show');
+    document.getElementById('oldPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    document.getElementById('passwordError').style.display = 'none';
+    setTimeout(() => document.getElementById('oldPassword').focus(), 100);
+  };
+
+  window.hidePasswordModal = function() {
+    document.getElementById('passwordModal').classList.remove('show');
+  };
+
+  window.changePassword = async function() {
+    const oldPwd = document.getElementById('oldPassword').value;
+    const newPwd = document.getElementById('newPassword').value;
+    const confirmPwd = document.getElementById('confirmPassword').value;
+    const errorEl = document.getElementById('passwordError');
+    const btn = document.getElementById('changePasswordBtn');
+
+    errorEl.style.display = 'none';
+
+    if (!oldPwd) {
+      errorEl.textContent = '请输入当前密码';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (!newPwd || newPwd.length < 4) {
+      errorEl.textContent = '新密码至少4位';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      errorEl.textContent = '两次输入的新密码不一致';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '修改中...';
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Auth-Token': token
+        },
+        body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.token) {
+        localStorage.setItem('auth_token', data.token);
+        alert('密码修改成功！');
+        hidePasswordModal();
+      } else {
+        errorEl.textContent = data.error || '修改失败';
+        errorEl.style.display = 'block';
+      }
+    } catch (e) {
+      errorEl.textContent = '网络错误，请重试';
+      errorEl.style.display = 'block';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '确认修改';
+  };
+
+  document.getElementById('passwordModal').addEventListener('click', (e) => {
+    if (e.target.id === 'passwordModal') hidePasswordModal();
+  });
 
   // 加载项目列表
   async function loadProjects() {

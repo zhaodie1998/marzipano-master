@@ -16,10 +16,33 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
 
 // 数据存储目录
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
+const AUTH_FILE = path.join(DATA_DIR, 'auth.json');
+
+// 默认账号密码
+const DEFAULT_CREDENTIALS = {
+  username: 'admin',
+  password: 'admin123'
+};
+
+// 获取当前认证信息
+function getAuth() {
+  try {
+    if (fs.existsSync(AUTH_FILE)) {
+      return JSON.parse(fs.readFileSync(AUTH_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.error('读取认证文件失败:', e);
+  }
+  return DEFAULT_CREDENTIALS;
+}
+
+// 保存认证信息
+function saveAuth(auth) {
+  fs.writeFileSync(AUTH_FILE, JSON.stringify(auth, null, 2));
+}
 const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
@@ -35,14 +58,20 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// 简易鉴权：若设置了 AUTH_TOKEN，则验证非GET/静态的请求头 x-auth-token
+// 鉴权中间件：验证密码
 app.use((req, res, next) => {
-  if (!AUTH_TOKEN) return next();
-  const isWrite = ['POST','PUT','DELETE'].includes(req.method);
   const isApi = req.path.startsWith('/api/');
-  if (isWrite && isApi) {
-    const token = req.header('x-auth-token') || '';
-    if (token !== AUTH_TOKEN) return res.status(401).json({ error: '未授权' });
+  const isLogin = req.path === '/api/login';
+  const isHealth = req.path === '/api/health';
+  
+  // 登录和健康检查接口不需要验证
+  if (!isApi || isLogin || isHealth) return next();
+  
+  const token = req.header('x-auth-token') || '';
+  const auth = getAuth();
+  
+  if (token !== auth.password) {
+    return res.status(401).json({ error: '未授权' });
   }
   next();
 });
@@ -379,6 +408,40 @@ app.get('/api/projects/:projectId/assets', (req, res) => {
 // 健康检查
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
+});
+
+// 登录验证
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  const auth = getAuth();
+  
+  if (username === auth.username && password === auth.password) {
+    res.json({ success: true, token: auth.password });
+  } else {
+    res.status(401).json({ error: '账号或密码错误' });
+  }
+});
+
+// 修改密码
+app.post('/api/change-password', (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const token = req.header('x-auth-token') || '';
+  const auth = getAuth();
+  
+  // 验证当前密码
+  if (token !== auth.password || oldPassword !== auth.password) {
+    return res.status(401).json({ error: '当前密码错误' });
+  }
+  
+  if (!newPassword || newPassword.length < 4) {
+    return res.status(400).json({ error: '新密码至少4位' });
+  }
+  
+  // 保存新密码
+  auth.password = newPassword;
+  saveAuth(auth);
+  
+  res.json({ success: true, token: newPassword });
 });
 
 // 错误处理

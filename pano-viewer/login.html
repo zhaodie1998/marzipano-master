@@ -289,8 +289,8 @@
         </div>
         
         <div class="form-group">
-          <label class="form-label" for="pass">访问令牌</label>
-          <input type="password" id="pass" class="form-input" placeholder="请输入访问令牌" autocomplete="current-password">
+          <label class="form-label" for="pass">密码</label>
+          <input type="password" id="pass" class="form-input" placeholder="请输入密码" autocomplete="current-password">
         </div>
         
         <button type="submit" id="loginBtn" class="btn-login">登录</button>
@@ -299,8 +299,8 @@
       <div class="divider"><span>提示</span></div>
       
       <div class="hint-box">
-        <strong>无需注册</strong>，使用管理员提供的访问令牌即可登录。<br>
-        令牌由服务端 <code>AUTH_TOKEN</code> 环境变量配置。
+        默认账号：<strong>admin</strong>，密码：<strong>admin123</strong><br>
+        登录后可在设置中修改密码。
       </div>
     </div>
   </div>
@@ -310,8 +310,8 @@
     (function() {
       const token = localStorage.getItem('auth_token');
       if (token) {
-        // 验证 token 是否有效
-        fetch('/api/health', {
+        // 验证 token 是否有效（使用需要认证的接口）
+        fetch('/api/projects', {
           headers: { 'X-Auth-Token': token }
         }).then(res => {
           if (res.ok) {
@@ -342,7 +342,7 @@
       }
       
       if (!pass) {
-        showError('请输入访问令牌');
+        showError('请输入密码');
         document.getElementById('pass').focus();
         return false;
       }
@@ -351,21 +351,19 @@
       btn.classList.add('loading');
       btn.disabled = true;
       
-      // 验证令牌
-      fetch('/api/projects', {
-        headers: { 'X-Auth-Token': pass }
-      }).then(res => {
-        if (res.ok || res.status === 200) {
+      // 调用登录 API
+      fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      }).then(res => res.json().then(data => ({ ok: res.ok, data }))).then(({ ok, data }) => {
+        if (ok && data.token) {
           // 保存令牌和用户名
-          localStorage.setItem('auth_token', pass);
+          localStorage.setItem('auth_token', data.token);
           localStorage.setItem('user_name', user);
           window.location.href = 'welcome-web.html';
-        } else if (res.status === 401) {
-          showError('访问令牌无效，请检查后重试');
-          btn.classList.remove('loading');
-          btn.disabled = false;
         } else {
-          showError('服务器连接失败，请稍后重试');
+          showError(data.error || '账号或密码错误');
           btn.classList.remove('loading');
           btn.disabled = false;
         }
