@@ -1,5 +1,35 @@
 (()=>{
   const BASE = '';
+  
+  // 带重试的 fetch 封装（移动端网络不稳定时使用）
+  async function fetchWithRetry(url, options = {}, maxRetries = 3) {
+    let lastError;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          // 移动端超时设置
+          signal: options.signal || AbortSignal.timeout(30000)
+        });
+        return response;
+      } catch (err) {
+        lastError = err;
+        console.warn(`请求失败 (${i + 1}/${maxRetries}):`, url, err.message);
+        
+        // 如果是用户主动中止，不重试
+        if (err.name === 'AbortError' && options.signal) {
+          throw err;
+        }
+        
+        // 等待后重试
+        if (i < maxRetries - 1) {
+          await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+        }
+      }
+    }
+    throw lastError;
+  }
+  
   const api = {
     _headers() {
       const token = localStorage.getItem('auth_token');
@@ -9,13 +39,13 @@
     },
 
     getProjects: async () => {
-      const res = await fetch(`${BASE}/api/projects`, { headers: api._headers() });
+      const res = await fetchWithRetry(`${BASE}/api/projects`, { headers: api._headers() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json();
     },
 
     createProject: async (name) => {
-      const res = await fetch(`${BASE}/api/projects`, {
+      const res = await fetchWithRetry(`${BASE}/api/projects`, {
         method: 'POST',
         headers: api._headers(),
         body: JSON.stringify({ name })
@@ -25,7 +55,7 @@
     },
 
     deleteProject: async (projectId) => {
-      const res = await fetch(`${BASE}/api/projects/${projectId}`, {
+      const res = await fetchWithRetry(`${BASE}/api/projects/${projectId}`, {
         method: 'DELETE',
         headers: api._headers()
       });
@@ -34,13 +64,13 @@
     },
 
     getProject: async (projectId) => {
-      const res = await fetch(`${BASE}/api/projects/${projectId}`, { headers: api._headers() });
+      const res = await fetchWithRetry(`${BASE}/api/projects/${projectId}`, { headers: api._headers() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json();
     },
 
     saveProject: async (projectId, data) => {
-      const res = await fetch(`${BASE}/api/projects/${projectId}`, {
+      const res = await fetchWithRetry(`${BASE}/api/projects/${projectId}`, {
         method: 'PUT',
         headers: api._headers(),
         body: JSON.stringify(data)

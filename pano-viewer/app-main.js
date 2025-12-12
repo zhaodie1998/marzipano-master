@@ -353,22 +353,46 @@ async function handleFileSelect(e) {
         const isEXR = window.EXRDecoder && window.EXRDecoder.isEXRFile(fileName);
         
         if (isEXR) {
-          // EXR 文件需要下载并解码
-          try {
-            setProgress(60 + Math.round((i + 0.3) / result.files.length * 35), `解码 EXR: ${name}`);
-            const response = await fetch(imageUrl);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const arrayBuffer = await response.arrayBuffer();
-            const dataURL = await window.EXRDecoder.renderEXRFromBuffer(arrayBuffer);
-            
-            await createScene(dataURL, name, i === 0, {
-              isServerAsset: true,
-              fileName: fileName,
-              exrBuffer: arrayBuffer
-            });
-          } catch (err) {
-            console.error(`❌ EXR 解码失败: ${name}`, err);
-            showNotification(`❌ EXR 解码失败: ${name}`, 'error');
+          // EXR 文件需要下载并解码（带重试）
+          let retries = 3;
+          let success = false;
+          
+          while (retries > 0 && !success) {
+            try {
+              setProgress(60 + Math.round((i + 0.3) / result.files.length * 35), `解码 EXR: ${name}`);
+              
+              // 使用带超时的 fetch
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+              
+              const response = await fetch(imageUrl, {
+                signal: controller.signal,
+                mode: 'cors',
+                credentials: 'omit'
+              });
+              clearTimeout(timeoutId);
+              
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+              const arrayBuffer = await response.arrayBuffer();
+              const dataURL = await window.EXRDecoder.renderEXRFromBuffer(arrayBuffer);
+              
+              await createScene(dataURL, name, i === 0, {
+                isServerAsset: true,
+                fileName: fileName,
+                exrBuffer: arrayBuffer
+              });
+              success = true;
+            } catch (err) {
+              retries--;
+              console.warn(`⚠ EXR 加载失败 (剩余重试: ${retries}): ${name}`, err.message);
+              
+              if (retries > 0) {
+                await new Promise(r => setTimeout(r, 2000)); // 等待2秒后重试
+              } else {
+                console.error(`❌ EXR 解码失败: ${name}`, err);
+                showNotification(`❌ EXR 解码失败: ${name}`, 'error');
+              }
+            }
           }
         } else {
           // 普通图片
