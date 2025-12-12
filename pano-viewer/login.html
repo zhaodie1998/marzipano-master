@@ -282,7 +282,7 @@
       
       <div id="errorMsg" class="error-msg"></div>
       
-      <form id="loginForm" onsubmit="return handleLogin(event)">
+      <form id="loginForm">
         <div class="form-group">
           <label class="form-label" for="user">账号</label>
           <input type="text" id="user" class="form-input" placeholder="请输入账号" autocomplete="username">
@@ -328,8 +328,7 @@
       setTimeout(() => el.classList.remove('show'), 5000);
     }
     
-    function handleLogin(e) {
-      e.preventDefault();
+    function handleLogin() {
       
       const user = document.getElementById('user').value.trim();
       const pass = document.getElementById('pass').value.trim();
@@ -377,11 +376,10 @@
       return false;
     }
     
-    // 回车提交
-    document.getElementById('pass').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('loginForm').dispatchEvent(new Event('submit'));
-      }
+    // 表单提交事件
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleLogin();
     });
   </script>
 </body>
