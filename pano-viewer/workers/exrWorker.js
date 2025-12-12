@@ -64,21 +64,28 @@ function toRGBA8(exrData, options = {}) {
   const half = data instanceof Uint16Array;
   const float = data instanceof Float32Array;
   const stride = 4; // assume RGBA
-  for (let i = 0, j = 0; i < data.length; i += stride, j += 4) {
-    let r, g, b, a;
-    if (half) {
-      r = halfToFloat(data[i]);
-      g = halfToFloat(data[i + 1]);
-      b = halfToFloat(data[i + 2]);
-      a = stride > 3 ? halfToFloat(data[i + 3]) : 1;
-    } else if (float) {
-      r = data[i]; g = data[i + 1]; b = data[i + 2]; a = stride > 3 ? data[i + 3] : 1;
-    } else {
-      // Unknown format: fallback
-      r = data[i] || 0; g = data[i + 1] || 0; b = data[i + 2] || 0; a = 1;
+  
+  // EXR 数据是从底部到顶部存储的，需要垂直翻转
+  for (let y = 0; y < height; y++) {
+    const srcY = height - 1 - y; // 翻转 Y 坐标
+    for (let x = 0; x < width; x++) {
+      const srcIdx = (srcY * width + x) * stride;
+      const dstIdx = (y * width + x) * 4;
+      
+      let r, g, b, a;
+      if (half) {
+        r = halfToFloat(data[srcIdx]);
+        g = halfToFloat(data[srcIdx + 1]);
+        b = halfToFloat(data[srcIdx + 2]);
+        a = stride > 3 ? halfToFloat(data[srcIdx + 3]) : 1;
+      } else if (float) {
+        r = data[srcIdx]; g = data[srcIdx + 1]; b = data[srcIdx + 2]; a = stride > 3 ? data[srcIdx + 3] : 1;
+      } else {
+        r = data[srcIdx] || 0; g = data[srcIdx + 1] || 0; b = data[srcIdx + 2] || 0; a = 1;
+      }
+      const [sr, sg, sb, sa] = mapPixel(r, g, b, a, exposure, tone);
+      out[dstIdx] = sr; out[dstIdx + 1] = sg; out[dstIdx + 2] = sb; out[dstIdx + 3] = sa;
     }
-    const [sr, sg, sb, sa] = mapPixel(r, g, b, a, exposure, tone);
-    out[j] = sr; out[j + 1] = sg; out[j + 2] = sb; out[j + 3] = sa;
   }
   return out;
 }
