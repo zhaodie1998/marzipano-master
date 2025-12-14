@@ -15,8 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const AUTH_TOKEN = process.env.AUTH_TOKEN || '';
+const PORT = process.env.PORT || 3001;
 
 // 数据存储目录
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
@@ -34,18 +33,6 @@ const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// 简易鉴权：若设置了 AUTH_TOKEN，则验证非GET/静态的请求头 x-auth-token
-app.use((req, res, next) => {
-  if (!AUTH_TOKEN) return next();
-  const isWrite = ['POST','PUT','DELETE'].includes(req.method);
-  const isApi = req.path.startsWith('/api/');
-  if (isWrite && isApi) {
-    const token = req.header('x-auth-token') || '';
-    if (token !== AUTH_TOKEN) return res.status(401).json({ error: '未授权' });
-  }
-  next();
-});
 
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '..')));
@@ -385,7 +372,3 @@ app.listen(PORT, () => {
 });
 
 export default app;
-// 返回鉴权信息
-app.get('/api/auth-info', (req, res) => {
-  res.json({ requireToken: !!AUTH_TOKEN });
-});

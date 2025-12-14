@@ -1,0 +1,79 @@
+
+/* Link hotspot */
+
+.link-hotspot {
+  width: 60px;
+  height: 60px;
+  margin-left: -30px;
+  margin-top: -30px;
+  opacity: 0.9;
+  -webkit-transition: opacity 0.2s;
+  transition: opacity 0.2s;
+}
+
+.no-touch .link-hotspot:hover {
+  opacity: 1;
+}
+
+.mobile .link-hotspot {
+  width: 70px;
+  height: 70px;
+}
+
+.link-hotspot-icon {
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.link-hotspot-tooltip {
+  position: absolute;
+  left: 100%;
+  top: 14px; /* ( 60 - (16 + 2*8) ) / 2 */
+
+  margin-left: 3px;
+
+  font-size: 16px;
+
+  max-width: 300px;
+
+  padding: 8px 10px;
+
+  border-radius: 5px;
+
+  background-color: rgba(58,68,84,0.8);
+
+  color: #fff;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+
+  cursor: pointer;
+
+  opacity: 0;
+
+  -ms-transform: translateX(-8px);
+  -webkit-transform: translateX(-8px);
+  transform: translateX(-8px);
+
+  -webkit-transition: -ms-transform 0.3s,
+                      -webkit-transform 0.3s,
+                      transform 0.3s,
+                      opacity 0.3s;
+  transition: -ms-transform 0.3s,
+              -webkit-transform 0.3s,
+              transform 0.3s,
+              opacity 0.3s;
+}
+
+.mobile .link-hotspot {
+  top: 19px; /* ( 70 - (16 + 2*8) ) / 2 */
+}
+
+.link-hotspot:hover .link-hotspot-tooltip {
+  opacity: 1;
+  -ms-transform: translateX(0);
+  -webkit-transform: translateX(0);
+  transform: translateX(0);
+}

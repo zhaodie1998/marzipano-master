@@ -20,7 +20,8 @@ const appState = {
   hotspots: [],
   autoRotate: false,
   rotateAnimation: null,
-  gyroEnabled: false
+  gyroEnabled: false,
+  thumbRowHidden: false
 };
 
 /**
@@ -41,13 +42,35 @@ function initApp() {
   // 创建 Marzipano viewer
   appState.viewer = new Marzipano.Viewer(document.getElementById('pano'), {
     controls: {
-      mouseViewMode: 'drag'
+      mouseViewMode: 'drag', // 默认为 drag，控制反转逻辑
     }
   });
 
+  // 修正鼠标/触摸控制逻辑 (反转 Pitch 使拖拽更符合直觉)
+  const controls = appState.viewer.controls();
+  if (controls) {
+    // 反转 DragControlMethod 的 Y 轴方向
+    ['mouseViewDrag', 'touchView'].forEach(id => {
+      const method = controls.method(id);
+      if (method) {
+        const originalMove = method._updateDynamicsMove;
+        const originalRelease = method._updateDynamicsRelease;
+
+        method._updateDynamicsMove = function(e) {
+          originalMove.call(this, e);
+          this._dynamics.y.offset *= -1;
+        };
+
+        method._updateDynamicsRelease = function(e) {
+          originalRelease.call(this, e);
+          this._dynamics.y.velocity *= -1;
+        };
+      }
+    });
+  }
+
   // 绑定事件
   bindEvents();
-  setupMobileUI();
   
   // 监听来自主进程的项目加载请求
   if (isElectron) {
@@ -86,20 +109,19 @@ function initApp() {
       }
     }, 100);
   } else if (isWebServer) {
+    // Web 服务端模式：从 URL 参数获取项目 ID
     const urlParams = new URLSearchParams(window.location.search);
-    let projectId = urlParams.get('project');
-    if (!projectId) {
-      const last = localStorage.getItem('last_project_id');
-      if (last) {
-        window.location.replace(`index.html?project=${last}`);
-        return;
-      }
-      window.location.replace('welcome-web.html');
-      return;
+    const projectId = urlParams.get('project');
+    
+    if (projectId) {
+      console.log('Loading project from server:', projectId);
+      currentProjectId = projectId;
+      loadProjectFromServer(projectId);
+    } else {
+      // 没有项目参数，显示默认场景或跳转到项目列表
+      console.log('⚠ 未指定项目，显示默认场景');
+      showDefaultSky();
     }
-    console.log('Loading project from server:', projectId);
-    currentProjectId = projectId;
-    loadProjectFromServer(projectId);
   } else {
     // 纯前端模式：从 localStorage 加载
     loadProject();
@@ -141,19 +163,33 @@ function bindEvents() {
   // 返回欢迎页/项目列表按钮
   const navActions = document.querySelector('.nav-actions');
   if (navActions) {
-    const backBtn = document.createElement('button');
-    backBtn.className = 'btn';
-    backBtn.innerHTML = '<span class="icon">🏠</span> 首页';
-    
-    if (isElectron) {
-      backBtn.onclick = () => window.electronAPI.openWelcome();
-    } else if (isWebServer) {
-      backBtn.onclick = () => window.location.href = 'welcome-web.html';
+    const goHomeBtn = document.getElementById('goHomeBtn');
+    if (goHomeBtn) {
+      if (isElectron) {
+        goHomeBtn.onclick = () => window.electronAPI.openWelcome();
+      } else if (isWebServer) {
+        goHomeBtn.onclick = () => window.location.href = 'welcome-web.html';
+      } else {
+        goHomeBtn.style.display = 'none';
+      }
     } else {
-      backBtn.style.display = 'none'; // 纯前端模式隐藏
+      const backBtn = document.createElement('button');
+      backBtn.className = 'btn';
+      backBtn.innerHTML = '<span class="icon">🏠</span> 首页';
+      if (isElectron) {
+        backBtn.onclick = () => window.electronAPI.openWelcome();
+      } else if (isWebServer) {
+        backBtn.onclick = () => window.location.href = 'welcome-web.html';
+      } else {
+        backBtn.style.display = 'none';
+      }
+      const topControls = document.getElementById('topControls');
+      if (topControls) {
+        navActions.insertBefore(backBtn, topControls.nextSibling);
+      } else {
+        navActions.appendChild(backBtn);
+      }
     }
-    
-    navActions.insertBefore(backBtn, navActions.firstChild);
   }
   
   // 其他按钮事件
@@ -191,6 +227,32 @@ function bindEvents() {
 
   const bottomScreenshotBtn = document.getElementById('bottomScreenshotBtn');
   if (bottomScreenshotBtn) bottomScreenshotBtn.addEventListener('click', takeScreenshot);
+  
+  const topAutoRotateBtn = document.getElementById('topAutoRotateBtn');
+  if (topAutoRotateBtn) topAutoRotateBtn.addEventListener('click', toggleAutoRotate);
+  const topFullscreenBtn = document.getElementById('topFullscreenBtn');
+  if (topFullscreenBtn) topFullscreenBtn.addEventListener('click', toggleFullscreen);
+  const topCompassBtn = document.getElementById('topCompassBtn');
+  if (topCompassBtn) topCompassBtn.addEventListener('click', toggleCompass);
+  const topGyroBtn = document.getElementById('topGyroBtn');
+  if (topGyroBtn) topGyroBtn.addEventListener('click', toggleGyroscope);
+  const topAddHotspotBtn = document.getElementById('topAddHotspotBtn');
+  if (topAddHotspotBtn) topAddHotspotBtn.addEventListener('click', showHotspotModal);
+  const topAddMusicBtn = document.getElementById('topAddMusicBtn');
+  if (topAddMusicBtn) topAddMusicBtn.addEventListener('click', addBackgroundMusic);
+  const topAddTextBtn = document.getElementById('topAddTextBtn');
+  if (topAddTextBtn) topAddTextBtn.addEventListener('click', addTextHotspot);
+  const topToggleHotspotsBtn = document.getElementById('topToggleHotspotsBtn');
+  if (topToggleHotspotsBtn) {
+    topToggleHotspotsBtn.addEventListener('click', () => {
+      toggleHotspots();
+      topToggleHotspotsBtn.classList.toggle('active');
+    });
+  }
+  const topMinimapBtn = document.getElementById('topMinimapBtn');
+  if (topMinimapBtn) topMinimapBtn.addEventListener('click', toggleMinimap);
+  const topSettingsBtn = document.getElementById('topSettingsBtn');
+  if (topSettingsBtn) topSettingsBtn.addEventListener('click', togglePropertiesPanel);
 
   // Keep old ID binding just in case
   const oldAutoRotateBtn = document.getElementById('autoRotateBtn');
@@ -214,13 +276,21 @@ function bindEvents() {
   if (minimapBtn) minimapBtn.addEventListener('click', toggleMinimap);
   document.getElementById('settingsBtn').addEventListener('click', togglePropertiesPanel);
   document.getElementById('closePanelBtn').addEventListener('click', togglePropertiesPanel);
-  const moreBtn = document.getElementById('bottomMoreBtn');
-  if (moreBtn) {
-    moreBtn.addEventListener('click', () => {
-      const bar = document.getElementById('controlBar');
-      if (!bar) return;
-      bar.classList.toggle('mobile-advanced-hidden');
-    });
+  const thumbToggleBtn = document.getElementById('thumbToggleBtn');
+  if (thumbToggleBtn) thumbToggleBtn.addEventListener('click', toggleThumbRow);
+  window.addEventListener('resize', fitThumbRowToOneLine);
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar) {
+    const applyBySidebar = () => {
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      setThumbRowHidden(!isCollapsed);
+    };
+    // 初始状态
+    applyBySidebar();
+    // 监听侧栏展开/折叠
+    const obs = new MutationObserver(applyBySidebar);
+    obs.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+    // 通过 MutationObserver 监听侧栏状态变化并联动底部缩略条，无需重绑点击事件
   }
   const saveBtn = document.getElementById('saveBtn');
   if (saveBtn) saveBtn.addEventListener('click', saveProject);
@@ -243,15 +313,50 @@ function bindEvents() {
   document.getElementById('hotspotType').addEventListener('change', (e) => {
     const contentGroup = document.getElementById('hotspotContentGroup');
     const linkGroup = document.getElementById('hotspotLinkGroup');
+    const arrowGroup = document.getElementById('hotspotArrowTargetGroup');
     if (e.target.value === 'link') {
       contentGroup.style.display = 'none';
       linkGroup.style.display = 'block';
+      if (arrowGroup) arrowGroup.style.display = 'none';
+      updateHotspotLinkOptions();
+    } else if (e.target.value === 'arrow') {
+      contentGroup.style.display = 'none';
+      linkGroup.style.display = 'block';
+      if (arrowGroup) {
+        arrowGroup.style.display = 'block';
+        const v = appState.currentScene?.view?.parameters();
+        if (v) {
+          const tyaw = document.getElementById('hotspotArrowTargetYaw');
+          const tpitch = document.getElementById('hotspotArrowTargetPitch');
+          const tfov = document.getElementById('hotspotArrowTargetFov');
+          if (tyaw) tyaw.value = Number(v.yaw).toFixed(3);
+          if (tpitch) tpitch.value = Number(v.pitch).toFixed(3);
+          if (tfov) tfov.value = Number(v.fov).toFixed(3);
+        }
+      }
       updateHotspotLinkOptions();
     } else {
       contentGroup.style.display = 'block';
       linkGroup.style.display = 'none';
+      if (arrowGroup) arrowGroup.style.display = 'none';
     }
   });
+
+  // 记录当前视角为箭头目标
+  const recordArrowBtn = document.getElementById('recordArrowTargetBtn');
+  if (recordArrowBtn) {
+    recordArrowBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const v = appState.currentScene?.view?.parameters();
+      if (!v) return;
+      const tyaw = document.getElementById('hotspotArrowTargetYaw');
+      const tpitch = document.getElementById('hotspotArrowTargetPitch');
+      const tfov = document.getElementById('hotspotArrowTargetFov');
+      if (tyaw) tyaw.value = Number(v.yaw).toFixed(3);
+      if (tpitch) tpitch.value = Number(v.pitch).toFixed(3);
+      if (tfov) tfov.value = Number(v.fov).toFixed(3);
+    });
+  }
   
   // 场景名称输入
   document.getElementById('sceneNameInput').addEventListener('change', (e) => {
@@ -306,33 +411,6 @@ function bindEvents() {
       showDependencies();
     }
   });
-}
-
-function setupMobileUI() {
-  const isMobile = window.matchMedia('(max-width: 768px)').matches || /Mobi|Android|iPhone/i.test(navigator.userAgent);
-  const setVh = () => {
-    const base = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
-    const vh = base * 0.01;
-    document.documentElement.style.setProperty('--app-vh', `${vh}px`);
-  };
-  setVh();
-  window.addEventListener('resize', setVh);
-  window.addEventListener('orientationchange', setVh);
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', setVh);
-  }
-  if (isMobile) {
-    const sidebar = document.getElementById('sidebar');
-    if (sidebar && !sidebar.classList.contains('collapsed')) sidebar.classList.add('collapsed');
-    const panel = document.getElementById('propertiesPanel');
-    if (panel && panel.classList.contains('show')) panel.classList.remove('show');
-    const overlay = document.getElementById('sceneTitleOverlay');
-    if (overlay) {
-      overlay.style.top = 'calc(72px + env(safe-area-inset-top))';
-    }
-    const bar = document.getElementById('controlBar');
-    if (bar) bar.classList.add('mobile-advanced-hidden');
-  }
 }
 
 /**
@@ -614,6 +692,14 @@ function createScene(imageData, filename, switchTo = false, options = {}) {
         pinFirstLevel: true
       });
       
+      // Generate a small thumbnail for persistence
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = 320;
+      thumbCanvas.height = 160;
+      const ctx = thumbCanvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, thumbCanvas.width, thumbCanvas.height);
+      const thumbnailDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.6);
+
       const sceneData = {
         id: sceneId,
         name: sceneName,
@@ -622,7 +708,7 @@ function createScene(imageData, filename, switchTo = false, options = {}) {
         scene: scene,
         view: view,
         hotspots: [],
-        thumbnail: imageData,
+        thumbnail: thumbnailDataUrl,
         isDefault: !!options.isDefault,
         exrBuffer: options.exrBuffer || null
       };
@@ -670,7 +756,7 @@ function removeDefaultSceneIfPresent() {
 }
 
 /**
- * 显示默认星空场景 (升级版：数字空间)
+ * 显示默认星空场景 (升级版：数字空间) -> 替换为明亮全景图
  */
 function showDefaultSky() {
   // 检查是否已有默认场景，避免重复创建
@@ -681,77 +767,9 @@ function showDefaultSky() {
     return;
   }
   
-  const width = 4096;
-  const height = 2048;
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-
-  // 1. 深空背景
-  const grd = ctx.createLinearGradient(0, 0, 0, height);
-  grd.addColorStop(0, '#020408');
-  grd.addColorStop(0.5, '#0a1525'); // 地平线附近稍亮
-  grd.addColorStop(1, '#020408');
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, width, height);
-
-  // 2. 科技感网格
-  ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)'; // 亮青色
-  ctx.lineWidth = 2;
-
-  // 经线 (垂直)
-  for (let x = 0; x <= width; x += width / 24) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-    ctx.stroke();
-  }
-
-  // 纬线 (水平)
-  for (let y = 0; y <= height; y += height / 12) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-    ctx.stroke();
-  }
-
-  // 3. 地平线光效
-  const horizonGlow = ctx.createLinearGradient(0, height / 2 - 150, 0, height / 2 + 150);
-  horizonGlow.addColorStop(0, 'rgba(56, 189, 248, 0)');
-  horizonGlow.addColorStop(0.5, 'rgba(56, 189, 248, 0.4)');
-  horizonGlow.addColorStop(1, 'rgba(56, 189, 248, 0)');
-  ctx.fillStyle = horizonGlow;
-  ctx.fillRect(0, height / 2 - 150, width, 300);
-
-  // 4. 随机粒子/星星
-  for (let i = 0; i < 1200; i++) {
-    const x = Math.random() * width;
-    const y = Math.random() * height;
-    const size = Math.random() * 2.5;
-    const opacity = Math.random() * 0.8 + 0.2;
-    
-    ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-    
-    // 偶尔出现彩色粒子
-    if (Math.random() > 0.95) {
-      ctx.fillStyle = `rgba(56, 189, 248, ${opacity})`; // 青色
-    }
-    
-    ctx.beginPath();
-    ctx.arc(x, y, size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // 5. 顶部极光效果
-  const aurora = ctx.createRadialGradient(width/2, 0, 0, width/2, 0, height/2);
-  aurora.addColorStop(0, 'rgba(139, 92, 246, 0.2)'); // 紫色
-  aurora.addColorStop(1, 'transparent');
-  ctx.fillStyle = aurora;
-  ctx.fillRect(0, 0, width, height/2);
-
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-  createScene(dataUrl, '数字空间', true, { isDefault: true });
+  // 使用下载的炫酷明亮全景图
+  const imageUrl = 'img/bright-pano.jpg';
+  createScene(imageUrl, '明亮空间', true, { isDefault: true });
 }
 
 /**
@@ -770,7 +788,6 @@ function switchScene(sceneId) {
   updateSceneList();
   document.getElementById('emptyViewer').style.display = 'none';
   document.getElementById('controlBar').style.display = 'flex';
-  document.getElementById('currentSceneName').textContent = sceneData.name;
   document.getElementById('sceneNameInput').value = sceneData.name;
   
   // Update overlay info
@@ -790,6 +807,8 @@ function switchScene(sceneId) {
   renderMinimap();
   if (graphMode) renderGraph();
   renderSceneDock();
+  renderThumbCarousel();
+  scheduleIdleAutorotate();
 }
 
 function prevScene() {
@@ -823,10 +842,10 @@ function updateSceneList() {
   }
   
   sceneList.innerHTML = appState.scenes.map(scene => `
-    <div class="scene-item ${scene.id === appState.currentScene?.id ? 'active' : ''}" data-scene-id="${scene.id}">
+    <div class="scene-item ${scene.id === appState.currentScene?.id ? 'active' : ''}" data-scene-id="${scene.id}" draggable="true">
       <img src="${scene.thumbnail}" alt="${scene.name}" class="scene-thumbnail">
       <div class="scene-info">
-        <span class="scene-name">${scene.name}</span>
+        <span class="scene-name" title="${scene.name}">${scene.name}</span>
         <div class="scene-actions">
           <button class="scene-action-btn edit" data-action="edit" title="编辑">✏️</button>
           <button class="scene-action-btn delete" data-action="delete" title="删除">🗑️</button>
@@ -843,21 +862,59 @@ function updateSceneList() {
         switchScene(sceneId);
       }
     });
-    
-    item.querySelectorAll('[data-action]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    const delBtn = item.querySelector('.scene-action-btn.delete');
+    if (delBtn) {
+      delBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const action = btn.dataset.action;
-        if (action === 'delete') {
-          deleteScene(sceneId);
-        } else if (action === 'edit') {
-          switchScene(sceneId);
-          togglePropertiesPanel();
+        deleteScene(sceneId);
+      });
+    }
+    const editBtn = item.querySelector('.scene-action-btn.edit');
+    if (editBtn) {
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const s = appState.scenes.find(x => x.id === sceneId);
+        if (!s) return;
+        const name = prompt('重命名场景', s.name || '');
+        if (name && name.trim()) {
+          s.name = name.trim();
+          updateSceneList();
+          saveProject();
         }
       });
+    }
+    
+    item.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', sceneId);
+      item.classList.add('dragging');
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      item.classList.remove('drag-over');
+    });
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      item.classList.add('drag-over');
+    });
+    item.addEventListener('dragleave', () => {
+      item.classList.remove('drag-over');
+    });
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const fromId = e.dataTransfer.getData('text/plain');
+      const toId = sceneId;
+      if (!fromId || fromId === toId) return;
+      const fromIdx = appState.scenes.findIndex(s => s.id === fromId);
+      const toIdx = appState.scenes.findIndex(s => s.id === toId);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const [moved] = appState.scenes.splice(fromIdx, 1);
+      appState.scenes.splice(toIdx, 0, moved);
+      updateSceneList();
+      saveProject();
     });
   });
   renderSceneDock();
+  renderThumbCarousel();
 }
 
 /**
@@ -892,7 +949,7 @@ function toggleAutoRotate() {
   appState.autoRotate = !appState.autoRotate;
   
   // Sync state to all auto-rotate buttons
-  const btns = document.querySelectorAll('#autoRotateBtn, #bottomAutoRotateBtn');
+  const btns = document.querySelectorAll('#autoRotateBtn, #bottomAutoRotateBtn, #topAutoRotateBtn');
   
   if (appState.autoRotate) {
     btns.forEach(btn => btn.classList.add('active'));
@@ -986,8 +1043,22 @@ function createHotspot() {
     title: title,
     content: type === 'link' ? linkScene : content,
     yaw: coords.yaw,
-    pitch: coords.pitch
+    pitch: coords.pitch,
+    targetYaw: undefined,
+    targetPitch: undefined,
+    targetFov: undefined
   };
+  if (type === 'arrow') {
+    const tyaw = parseFloat(document.getElementById('hotspotArrowTargetYaw')?.value || '');
+    const tpitch = parseFloat(document.getElementById('hotspotArrowTargetPitch')?.value || '');
+    const tfov = parseFloat(document.getElementById('hotspotArrowTargetFov')?.value || '');
+    hotspotData.targetYaw = isNaN(tyaw) ? coords.yaw : tyaw;
+    hotspotData.targetPitch = isNaN(tpitch) ? coords.pitch : tpitch;
+    hotspotData.targetFov = isNaN(tfov) ? coords.fov : tfov;
+    if (linkScene) {
+      hotspotData.targetScene = linkScene;
+    }
+  }
   
   appState.currentScene.hotspots.push(hotspotData);
   addHotspotToScene(appState.currentScene, hotspotData);
@@ -999,15 +1070,30 @@ function createHotspot() {
 
 function addHotspotToScene(sceneData, hotspotData) {
   const hotspotElement = document.createElement('div');
-  hotspotElement.className = 'hotspot';
   hotspotElement.setAttribute('data-hotspot-id', hotspotData.id);
   
-  const icon = hotspotData.type === 'link' ? '🚪' : hotspotData.type === 'image' ? '🖼️' : 'ℹ️';
-  
-  hotspotElement.innerHTML = `
-    <div class="hotspot-circle">${icon}</div>
-    <div class="hotspot-tooltip">${hotspotData.title}</div>
-  `;
+  if (hotspotData.type === 'link' || hotspotData.type === 'arrow') {
+    hotspotElement.className = 'link-hotspot';
+    if (hotspotData.type === 'arrow') {
+      hotspotElement.innerHTML = `
+        <svg class="link-hotspot-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2l7 7h-4v6h-6V9H5l7-7z"/></svg>
+        <div class="link-hotspot-tooltip">${hotspotData.title}</div>
+      `;
+    } else {
+      hotspotElement.innerHTML = `
+        <img src="img/link.png" class="link-hotspot-icon">
+        <div class="link-hotspot-tooltip">${hotspotData.title}</div>
+      `;
+    }
+  } else {
+    hotspotElement.className = 'hotspot';
+    const icon = hotspotData.type === 'image' ? '🖼️' : 'ℹ️';
+    
+    hotspotElement.innerHTML = `
+      <div class="hotspot-circle">${icon}</div>
+      <div class="hotspot-tooltip">${hotspotData.title}</div>
+    `;
+  }
   
   hotspotElement.addEventListener('click', () => {
     handleHotspotClick(hotspotData);
@@ -1022,6 +1108,22 @@ function addHotspotToScene(sceneData, hotspotData) {
 function handleHotspotClick(hotspotData) {
   if (hotspotData.type === 'link') {
     switchScene(hotspotData.content);
+  } else if (hotspotData.type === 'arrow') {
+    if (hotspotData.targetScene) {
+      const toYaw = hotspotData.targetYaw ?? 0;
+      const toPitch = hotspotData.targetPitch ?? 0;
+      const toFov = hotspotData.targetFov ?? Math.PI/2;
+      switchScene(hotspotData.targetScene);
+      setTimeout(() => {
+        appState.viewer.lookTo({ yaw: toYaw, pitch: toPitch, fov: toFov }, { transitionDuration: 800 });
+      }, 350);
+    } else {
+      const v = appState.currentScene?.view?.parameters() || {};
+      const toYaw = hotspotData.targetYaw ?? hotspotData.yaw ?? v.yaw ?? 0;
+      const toPitch = hotspotData.targetPitch ?? hotspotData.pitch ?? v.pitch ?? 0;
+      const toFov = hotspotData.targetFov ?? v.fov ?? Math.PI/2;
+      appState.viewer.lookTo({ yaw: toYaw, pitch: toPitch, fov: toFov }, { transitionDuration: 800 });
+    }
   } else if (hotspotData.type === 'info') {
     alert(`${hotspotData.title}\n\n${hotspotData.content}`);
   } else if (hotspotData.type === 'image') {
@@ -1087,7 +1189,8 @@ function getHotspotTypeName(type) {
   const names = {
     'info': '信息热点',
     'link': '场景链接',
-    'image': '图片热点'
+    'image': '图片热点',
+    'arrow': '箭头路径'
   };
   return names[type] || type;
 }
@@ -1181,7 +1284,6 @@ async function saveProject() {
       if (result.success) {
         console.log('✅ 项目已保存到服务器:', projectData.scenes.map(s => s.imageFile));
         showNotification('✅ 项目已保存');
-        if (currentProjectId) localStorage.setItem('last_project_id', currentProjectId);
       } else {
         showNotification('❌ 保存失败', 'error');
       }
@@ -1262,6 +1364,38 @@ async function loadProjectFromDisk(projectPath) {
         // 创建场景对象
         await new Promise((resolve) => {
           const img = new Image();
+          
+          // 如果是 .exr 文件，则不尝试作为普通图片加载
+          if (imageUrl.toLowerCase().endsWith('.exr')) {
+             console.warn(`⚠ 暂不支持直接预览 EXR 文件: ${imageUrl}`);
+             // 创建一个占位场景或使用默认纹理
+             const geometry = new Marzipano.CubeGeometry([{ tileSize: 1024, size: 1024 }]);
+             const limiter = Marzipano.RectilinearView.limit.traditional(4096, 120 * Math.PI / 180);
+             const view = new Marzipano.RectilinearView({ yaw: 0, pitch: 0, fov: 90 * Math.PI / 180 }, limiter);
+             
+             // 使用一个深色占位图作为源，或者提示用户
+             const source = new Marzipano.ImageUrlSource(() => {
+               return { url: 'img/nature-pano.jpg' }; // 临时使用默认图作为占位，避免报错
+             });
+             
+             const scene = appState.viewer.createScene({ source, geometry, view, pinFirstLevel: true });
+             
+             const sceneData = {
+               id: s.id,
+               name: s.name + ' (EXR Preview Unavailable)',
+               imageData: imageUrl,
+               fileName: fileName,
+               scene: scene,
+               view: view,
+               hotspots: s.hotspots || [],
+               thumbnail: 'img/nature-pano.jpg' // EXR 没有缩略图，使用默认
+             };
+             appState.scenes.push(sceneData);
+             showNotification(`⚠ EXR 格式仅支持部分功能: ${s.name}`, 'warning');
+             resolve();
+             return;
+          }
+
           img.onload = () => {
             const aspectRatio = img.width / img.height;
             let geometry;
@@ -1300,7 +1434,16 @@ async function loadProjectFromDisk(projectPath) {
       
       updateSceneList();
       
-      // 切换到上次保存的场景或第一个场景
+      if (appState.scenes.length > 0 && appState.scenes[0].thumbnail && currentProjectPath) {
+        window.electronAPI.loadProjectData(currentProjectPath).then(projectData => {
+          if (projectData && projectData.thumbnail !== appState.scenes[0].thumbnail) {
+            window.electronAPI.saveProjectData(currentProjectPath, { thumbnail: appState.scenes[0].thumbnail })
+              .then(() => console.log('✅ Updated project thumbnail via API'));
+          }
+        });
+      }
+
+      // Switch to saved scene or first scene
       const targetId = data.currentSceneId || (appState.scenes[0] && appState.scenes[0].id);
       if (targetId) {
         switchScene(targetId);
@@ -1479,9 +1622,30 @@ function toggleMinimap() {
   if (!el) return;
   const visible = el.style.display !== 'none';
   el.style.display = visible ? 'none' : 'block';
+  const btnTop = document.getElementById('topMinimapBtn');
+  const btnBottom = document.getElementById('minimapBtn');
+  if (btnTop) btnTop.classList.toggle('active', el.style.display !== 'none');
+  if (btnBottom) btnBottom.classList.toggle('active', el.style.display !== 'none');
   if (!visible) renderMinimap();
 }
 
+function toggleThumbRow() {
+  const el = document.getElementById('thumbCarousel');
+  if (!el) return;
+  setThumbRowHidden(!appState.thumbRowHidden);
+}
+
+function setThumbRowHidden(hidden) {
+  const el = document.getElementById('thumbCarousel');
+  const btn = document.getElementById('thumbToggleBtn');
+  appState.thumbRowHidden = !!hidden;
+  if (el) el.style.display = appState.thumbRowHidden ? 'none' : 'block';
+  if (btn) {
+    btn.classList.toggle('active', appState.thumbRowHidden);
+    btn.title = appState.thumbRowHidden ? '显示缩略图' : '隐藏缩略图';
+  }
+  if (!appState.thumbRowHidden) fitThumbRowToOneLine();
+}
 function renderMinimap() {
   const el = document.getElementById('minimap');
   if (!el) return;
@@ -1522,6 +1686,158 @@ function renderSceneDock() {
       toggle.textContent = hidden ? '▼' : '▲';
     };
   }
+}
+
+function fitThumbRowToOneLine() {
+  const container = document.getElementById('thumbCarousel');
+  const list = document.getElementById('thumbList');
+  if (!container || !list) return;
+  list.style.transform = 'none';
+  container.style.overflowX = 'hidden';
+  const required = list.scrollWidth;
+  const available = container.clientWidth;
+  if (!available || !required) return;
+  list.style.setProperty('--thumb-scale', '0.5');
+  // 由于采用实际布局缩放，scrollWidth已按缩放后反映真实宽度，无需再用transform
+  if (list.scrollWidth > available) {
+    container.style.overflowX = 'auto';
+    container.style.webkitOverflowScrolling = 'touch';
+    container.style.justifyContent = 'flex-start';
+    updateThumbScrollbar();
+  } else {
+    container.style.overflowX = 'hidden';
+    container.style.justifyContent = 'center';
+    updateThumbScrollbar();
+  }
+}
+
+let thumbAutoScrollActive = false;
+let thumbAutoScrollDir = 0;
+let thumbAutoScrollRaf = 0;
+let thumbScrollHideTimer = 0;
+function handleThumbAutoScroll(e) {
+  const container = document.getElementById('thumbCarousel');
+  if (!container || !thumbAutoScrollActive) return;
+  const rect = container.getBoundingClientRect();
+  const EDGE = 40;
+  if (e.clientX < rect.left + EDGE) {
+    thumbAutoScrollDir = -1;
+  } else if (e.clientX > rect.right - EDGE) {
+    thumbAutoScrollDir = 1;
+  } else {
+    thumbAutoScrollDir = 0;
+  }
+}
+function thumbAutoScrollLoop() {
+  if (!thumbAutoScrollActive) return;
+  const container = document.getElementById('thumbCarousel');
+  if (container && thumbAutoScrollDir !== 0) {
+    const SPEED = 20;
+    container.scrollLeft += SPEED * thumbAutoScrollDir;
+  }
+  thumbAutoScrollRaf = requestAnimationFrame(thumbAutoScrollLoop);
+}
+function startThumbAutoScroll() {
+  if (thumbAutoScrollActive) return;
+  thumbAutoScrollActive = true;
+  thumbAutoScrollRaf = requestAnimationFrame(thumbAutoScrollLoop);
+}
+function stopThumbAutoScroll() {
+  thumbAutoScrollActive = false;
+  thumbAutoScrollDir = 0;
+  if (thumbAutoScrollRaf) cancelAnimationFrame(thumbAutoScrollRaf);
+  thumbAutoScrollRaf = 0;
+}
+
+function updateThumbScrollbar() {
+  const container = document.getElementById('thumbCarousel');
+  const list = document.getElementById('thumbList');
+  const bar = document.getElementById('thumbScrollBar');
+  if (!container || !list || !bar) return;
+  const cw = container.clientWidth;
+  const sw = list.scrollWidth;
+  if (!cw || !sw || sw <= cw) {
+    bar.style.opacity = '0';
+    return;
+  }
+  const handle = bar.querySelector('.thumb-scrollbar-thumb');
+  const ratio = cw / sw;
+  const handleW = Math.max(30, Math.floor(cw * ratio));
+  const maxLeft = cw - handleW;
+  const left = (container.scrollLeft / (sw - cw)) * maxLeft;
+  handle.style.width = handleW + 'px';
+  handle.style.transform = `translateX(${left}px)`;
+  bar.style.opacity = '';
+}
+
+function showThumbScrollbar() {
+  const bar = document.getElementById('thumbScrollBar');
+  if (!bar) return;
+  bar.classList.add('show');
+  if (thumbScrollHideTimer) clearTimeout(thumbScrollHideTimer);
+  thumbScrollHideTimer = setTimeout(() => bar.classList.remove('show'), 1200);
+}
+
+function renderThumbCarousel() {
+  const list = document.getElementById('thumbList');
+  if (!list) return;
+  const scenes = appState.scenes.filter(s => !s.isDefault);
+  if (scenes.length === 0) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = scenes.map(s => `
+    <div class="thumb-item ${s.id === appState.currentScene?.id ? 'active' : ''}" data-id="${s.id}" draggable="true">
+      <img src="${s.thumbnail || s.imageData}" alt="${s.name}" title="${s.name}">
+    </div>
+  `).join('');
+  list.querySelectorAll('.thumb-item').forEach(el => {
+    el.addEventListener('click', () => switchScene(el.dataset.id));
+    el.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', el.dataset.id);
+      el.classList.add('dragging');
+      startThumbAutoScroll();
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      el.classList.remove('drag-over');
+      stopThumbAutoScroll();
+    });
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('dragleave', () => {
+      el.classList.remove('drag-over');
+    });
+    el.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const fromId = e.dataTransfer.getData('text/plain');
+      const toId = el.dataset.id;
+      if (!fromId || fromId === toId) return;
+      const fromIdx = appState.scenes.findIndex(s => s.id === fromId);
+      const toIdx = appState.scenes.findIndex(s => s.id === toId);
+      if (fromIdx === -1 || toIdx === -1) return;
+      const [moved] = appState.scenes.splice(fromIdx, 1);
+      appState.scenes.splice(toIdx, 0, moved);
+      renderThumbCarousel();
+      updateSceneList();
+      saveProject();
+    });
+  });
+  const container = document.getElementById('thumbCarousel');
+  if (container) {
+    container.addEventListener('dragover', handleThumbAutoScroll);
+    container.addEventListener('dragleave', () => thumbAutoScrollDir = 0);
+    container.addEventListener('drop', () => stopThumbAutoScroll());
+    container.addEventListener('scroll', () => { updateThumbScrollbar(); showThumbScrollbar(); });
+    container.addEventListener('mouseenter', () => showThumbScrollbar());
+    container.addEventListener('mouseleave', () => {
+      const bar = document.getElementById('thumbScrollBar');
+      if (bar) bar.classList.remove('show');
+    });
+  }
+  fitThumbRowToOneLine();
 }
 
 let graphMode = false;
@@ -1579,6 +1895,16 @@ function renderGraph() {
   });
 }
 
+function scheduleIdleAutorotate() {
+  if (!appState.viewer) return;
+  const autorotate = Marzipano.autorotate({
+    yawSpeed: (-0.3) * Math.PI / 180,
+    targetPitch: 0,
+    targetFov: Math.PI / 2
+  });
+  appState.viewer.setIdleMovement(3000, autorotate);
+}
+
 // New features implementation
 
 function toggleGyroscope() {
@@ -1588,13 +1914,13 @@ function toggleGyroscope() {
   }
   
   appState.gyroEnabled = !appState.gyroEnabled;
-  const btn = document.getElementById('gyroBtn');
+  const btns = document.querySelectorAll('#gyroBtn, #topGyroBtn');
   
   if (appState.gyroEnabled) {
-    if (btn) btn.classList.add('active');
+    btns.forEach(b => b && b.classList.add('active'));
     startGyroscope();
   } else {
-    if (btn) btn.classList.remove('active');
+    btns.forEach(b => b && b.classList.remove('active'));
     stopGyroscope();
   }
 }

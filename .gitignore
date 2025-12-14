@@ -1,21 +1,34 @@
-# Keep in sync with .npmignore.
-*~
-.tmp
+# OS
 .DS_Store
-npm-debug.log
-package-lock.json
-/node_modules/*
-/tmp/*
-/build/*
-/dist/*
-/docs/*
-/test/test_suite.js*
-.idea
-/pano-viewer/dist_app_v2/
-/pano-viewer/dist_app/
-*.exe
-*.dll
-*.pak
-*.bin
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Node & build artifacts
 node_modules/
-*.asar
+build/
+dist/
+.cache/
+npm-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+
+# Generated data (server uploads/projects)
+pano-viewer/data/uploads/
+pano-viewer/data/projects/
+
+# Packaged binaries (Electron builds)
+pano-viewer/dist_app/
+pano-viewer/dist_app_v2/
+
+# Preview/coverage
+coverage/
+
+# Temporary
+*.tmp
+*.swp

@@ -17,7 +17,7 @@ var data = {
   "scenes": [
     {
       "id": "oriente-station",
-      "name": "Oriente Station",
+      "name": "东方车站",
       "levels": [
         {
           "tileSize": 256,
@@ -59,14 +59,14 @@ var data = {
         {
           "yaw": -0.00038049728702915786,
           "pitch": 0.014985751462495145,
-          "title": "Oriente Station",
-          "text": "The Oriente Station is one of the most important bus and train stations in the city. Designed by the Spanish architect and engineer Santiago Calatrava, it has an enormous metal skeleton that covers the eight train lines and its platforms. Finished in 1998 to serve the Expo’98 and, later, the Parque das Nações area, in its surroundings are companies, services, hotels, bars, animation, as well as the well known Vasco da Gama shopping centre."
+          "title": "东方车站",
+          "text": "东方车站是该市最重要的巴士和火车站之一。由西班牙建筑师圣地亚哥·卡拉特拉瓦设计，拥有巨大的金属骨架，覆盖了八条铁路线及其站台。于1998年完工，服务于98世博会，后来服务于万国公园地区。周边有公司、服务机构、酒店、酒吧、娱乐场所以及著名的达伽马购物中心。"
         }
       ]
     },
     {
       "id": "electricity-museum",
-      "name": "Electricity Museum",
+      "name": "电力博物馆",
       "levels": [
         {
           "tileSize": 256,
@@ -108,14 +108,14 @@ var data = {
         {
           "yaw": -0.1606464893205768,
           "pitch": -0.17433292221669205,
-          "title": "Boilers Room",
-          "text": "In the impressive Boilers Room at the Electricity Museum we find four large boilers of about 100 feet tall, with their respective control panels, air and fuel circuits, ventilators, etc. Boiler number 15 has been musealised and visitors may go in and discover its structure and internal component: conveyor belt, Bailey walls, naphtha burners, water heating tubes, and so on."
+          "title": "锅炉房",
+          "text": "在电力博物馆令人印象深刻的锅炉房里，我们发现了四个约100英尺高的大型锅炉，配有各自的控制面板、空气和燃料回路、通风机等。15号锅炉已被博物馆化，游客可以进入内部探索其结构和内部组件：传送带、贝利墙、石脑油燃烧器、水加热管等。"
         }
       ]
     },
     {
       "id": "jeronimos",
-      "name": "Jerónimos Monastery",
+      "name": "热罗尼莫斯修道院",
       "levels": [
         {
           "tileSize": 256,
@@ -157,13 +157,13 @@ var data = {
         {
           "yaw": 0.5350080558065997,
           "pitch": 0.24525106321929435,
-          "title": "Jerónimos Monastery",
-          "text": "The Jerónimos Monastery cloister is a pleasant and serene place intended to foster monks’ prayers and meditation. Its manuelin decoration features decorative religious, nautical and royal elements, as well as vegetal motifs. Since 1985, the tomb of the poet Fernando Pessoa rests in the north wing of the cloister’s ground floor."
+          "title": "热罗尼莫斯修道院",
+          "text": "热罗尼莫斯修道院回廊是一个宜人而宁静的地方，旨在促进僧侣的祈祷和冥想。其曼努埃尔风格装饰具有宗教、航海和皇室元素，以及植物图案。自1985年以来，诗人费尔南多·佩索阿的墓一直位于回廊底层的北翼。"
         }
       ]
     }
   ],
-  "name": "Sample Tour",
+  "name": "全景漫游示例",
   "settings": {
     "mouseViewMode": "drag",
     "autorotateEnabled": true,

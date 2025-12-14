@@ -25,22 +25,22 @@
     }
     
     .header {
+      position: fixed;
+      top: 16px;
+      left: 24px;
+      right: 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      margin-bottom: 30px;
+      padding: 0;
+      margin: 0;
+      border: none;
+      z-index: 110;
+      pointer-events: auto;
     }
     
-    .header h1 {
-      font-size: 24px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 0;
-    }
+    .header h1 { font-size: clamp(18px, 2vw, 24px); font-weight: 700; margin:0; letter-spacing:.5px; }
+    .header h1 svg { width:28px; height:28px; vertical-align: middle; }
     
     .header h1 svg {
       width: 32px;
@@ -59,13 +59,27 @@
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       color: white;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(59,130,246,0.18);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(59,130,246,0.35);
     }
-    
+    .btn-primary.pulse {
+      position: relative;
+      overflow: visible;
+      animation: pulseGlow 2.8s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 8px 24px rgba(59,130,246,0.35), 0 0 0 0 rgba(59,130,246,0.0); }
+      50% { box-shadow: 0 12px 30px rgba(59,130,246,0.5), 0 0 0 10px rgba(59,130,246,0.12); }
+    }
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      box-shadow: 0 10px 24px rgba(59,130,246,0.5);
+      background: rgba(59,130,246,0.24);
+      border-color: rgba(255,255,255,0.35);
     }
     
     .btn-secondary {
@@ -164,18 +178,48 @@
     .modal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(4px);
-      display: none;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      visibility: hidden;
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .modal.show {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Drawer Modal Styles */
+    .modal.drawer-modal {
+      justify-content: flex-end;
+      padding: 0;
+    }
+    .modal.drawer-modal .modal-box {
+      height: 100%;
+      max-height: 100vh;
+      margin: 0;
+      border-radius: 16px 0 0 16px;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      border: none;
+      border-left: 1px solid rgba(255,255,255,0.1);
+      width: 520px; /* wider profile drawer */
+    }
+    .modal.drawer-modal.show .modal-box {
+      transform: translateX(0);
     }
     
-    .modal.show { display: flex; }
-    
     .modal-box {
-      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      background: rgba(15,23,42,0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       padding: 28px 32px;
       border-radius: 16px;
       width: 400px;
@@ -189,6 +233,17 @@
       font-size: 18px;
       font-weight: 600;
     }
+
+    /* Profile modal layout */
+    .profile-modal { padding: 28px 28px 16px 28px; }
+    .profile-header { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+    .profile-header .avatar { width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; border:1px solid rgba(255,255,255,0.2); }
+    .profile-header .meta h2{ margin:0 0 8px 0; }
+    .profile-header .stats{ display:flex; gap:12px; opacity:.9; }
+    .profile-header .stats .num{ font-weight:700; margin-right:4px; }
+    .profile-header .stats .label{ font-size:12px; opacity:.8; }
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .profile-actions{ margin-top:16px; }
     
     .form-group {
       margin-bottom: 16px;
@@ -235,18 +290,20 @@
 <body>
 
 <div class="container">
-  <div class="header">
-    <h1>
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-      全景编辑器
-    </h1>
-    <div>
-      <button class="btn btn-secondary" onclick="relogin()">重新登录</button>
-      <button class="btn btn-primary" onclick="showCreateModal()">+ 新建项目</button>
+    <div class="header">
+      <h1>
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        全景编辑器
+      </h1>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <button class="btn btn-primary pulse" onclick="showCreateModal()" style="padding:8px 16px;font-size:13px;border-radius:10px;">+ 新建项目</button>
+      <button id="webUserProfileBtn" class="btn btn-secondary" title="个人中心" style="width:40px;height:40px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </button>
     </div>
-  </div>
+    </div>
   
-  <div class="project-grid" id="projectGrid">
+  <div class="project-grid" id="projectGrid" style="margin-top: 24px;">
     <div class="loading">加载中...</div>
   </div>
 </div>
@@ -266,19 +323,78 @@
   </div>
 </div>
 
+<!-- Profile Modal -->
+  <div class="modal drawer-modal" id="webProfileModal">
+    <div class="modal-box profile-modal">
+      <div class="profile-header">
+        <div class="avatar">A</div>
+        <div class="meta">
+          <h2>个人资料</h2>
+          <div class="stats">
+            <div><span class="num" id="statProjects">-</span><span class="label">项目</span></div>
+            <div><span class="num" id="statScenes">-</span><span class="label">场景</span></div>
+            <div><span class="num" id="statUpdated">-</span><span class="label">最近</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>用户名</label>
+          <input type="text" value="Administrator" readonly style="background: rgba(0,0,0,0.2); cursor: not-allowed;">
+        </div>
+        <div class="form-group">
+          <label>邮箱</label>
+          <input type="email" value="admin@example.com" readonly style="background: rgba(0,0,0,0.2); cursor: not-allowed;">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>个人简介</label>
+          <input type="text" placeholder="介绍一下自己...">
+        </div>
+      </div>
+      <div class="modal-actions profile-actions">
+        <div style="flex:1"></div>
+        <button class="btn btn-secondary" onclick="showWebChangePwd()">修改密码</button>
+        <button class="btn btn-secondary" onclick="webLogout()">退出登录</button>
+        <button class="btn btn-primary" onclick="saveWebProfile()">保存</button>
+        <button class="btn btn-secondary" onclick="hideWebProfile()">关闭</button>
+      </div>
+    </div>
+    </div>
+  
+  <!-- Change Password Modal (Web) -->
+  <div class="modal" id="webChangePwdModal">
+    <div class="modal-box" style="width:420px;">
+      <h2>修改密码</h2>
+      <div class="form-group">
+        <label>当前密码</label>
+        <input type="password" id="webCurrentPwd" placeholder="输入当前密码">
+      </div>
+      <div class="form-group">
+        <label>新密码</label>
+        <input type="password" id="webNewPwd" placeholder="输入新密码">
+      </div>
+      <div class="form-group">
+        <label>确认新密码</label>
+        <input type="password" id="webConfirmPwd" placeholder="再次输入新密码">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="hideWebChangePwd()">取消</button>
+        <button class="btn btn-primary" onclick="saveWebPassword()">保存</button>
+      </div>
+    </div>
+  </div>
+ 
 <script src="api-client.js"></script>
 <script>
-  // 根据服务端是否要求令牌进行跳转
-  (async function(){
-    try {
-      const info = await apiClient.getAuthInfo();
-      if (info && info.requireToken && !localStorage.getItem('auth_token')) {
-        window.location.replace('login.html');
-      }
-    } catch {}
-  })();
-</script>
-<script>
+
+// 兜底：若未定义 apiClient，则提供最简 Mock，避免页面报错
+if (!window.apiClient) {
+  window.apiClient = {
+    getProjects: async () => [],
+    createProject: async (name) => ({ success: true, project: { id: String(Date.now()), name } }),
+    deleteProject: async () => true
+  };
+}
 
 // 加载项目列表
 async function loadProjects() {
@@ -301,7 +417,7 @@ async function loadProjects() {
     grid.innerHTML = projects.map(p => `
       <div class="project-card" onclick="openProject('${p.id}')">
         <button class="delete-btn" onclick="deleteProject(event, '${p.id}')">✕</button>
-        <img src="${p.thumbnail || 'favicon.svg'}" class="project-thumb" onerror="this.src='favicon.svg'">
+        <img src="${p.thumbnail || 'img/nature-pano.jpg'}" class="project-thumb" onerror="this.src='img/nature-pano.jpg'">
         <div class="project-info">
           <h3>${escapeHtml(p.name)}</h3>
           <div class="project-meta">
@@ -350,11 +466,6 @@ window.showCreateModal = function() {
 
 window.hideCreateModal = function() {
   document.getElementById('createModal').classList.remove('show');
-};
-
-window.relogin = function() {
-  try { localStorage.removeItem('auth_token'); } catch {}
-  window.location.href = 'login.html';
 };
 
 window.createProject = async function() {
@@ -408,13 +519,102 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') hideCreateModal();
 });
 
-document.getElementById('createModal').addEventListener('click', (e) => {
-  if (e.target.id === 'createModal') hideCreateModal();
-});
+function formatCompact(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+}
+  
+  document.getElementById('createModal').addEventListener('click', (e) => {
+    if (e.target.id === 'createModal') hideCreateModal();
+  });
 
+  // 背景全景图容器
+  const panoBg = document.createElement('div');
+  panoBg.id = 'pano-bg';
+  document.body.appendChild(panoBg);
+  
+  // Profile actions
+  const webUserBtn = document.getElementById('webUserProfileBtn');
+  webUserBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showWebProfile();
+  });
+  function showWebProfile() {
+    document.getElementById('webProfileModal').classList.add('show');
+    initWebProfileStats();
+  }
+  function hideWebProfile() {
+    document.getElementById('webProfileModal').classList.remove('show');
+  }
+  function saveWebProfile() {
+    const btn = document.querySelector('#webProfileModal .btn.btn-primary');
+    const original = btn.textContent;
+    btn.textContent = '保存中...';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.disabled = false;
+      hideWebProfile();
+    }, 800);
+  }
+  document.getElementById('webProfileModal').addEventListener('click', (e) => {
+    if (e.target.id === 'webProfileModal') hideWebProfile();
+  });
+  
+  async function initWebProfileStats() {
+    try {
+      const projects = await apiClient.getProjects();
+      const elP = document.getElementById('statProjects');
+      const elS = document.getElementById('statScenes');
+      const elU = document.getElementById('statUpdated');
+      let scenes = 0;
+      let latest = 0;
+      for (const p of projects) {
+        latest = Math.max(latest, p.lastModified || 0);
+        scenes += (p.sceneCount || 0);
+      }
+      if (elP) elP.textContent = projects.length;
+      if (elS) elS.textContent = scenes;
+      if (elU) elU.textContent = latest ? formatCompact(latest) : '-';
+    } catch (e) {}
+  }
+
+  function showWebChangePwd(){ document.getElementById('webChangePwdModal').classList.add('show'); }
+  function hideWebChangePwd(){ document.getElementById('webChangePwdModal').classList.remove('show'); }
+  function webLogout(){
+    localStorage.removeItem('auth_user');
+    window.location.href = 'login.html';
+  }
+  function saveWebPassword(){
+    const current = document.getElementById('webCurrentPwd').value;
+    const next = document.getElementById('webNewPwd').value;
+    const confirmP = document.getElementById('webConfirmPwd').value;
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    const auth = JSON.parse(localStorage.getItem('auth_user') || '{"username":"admin"}');
+    const u = auth.username || 'admin';
+    const now = Date.now();
+    const lastTs = Number(localStorage.getItem('pwd_change_ts') || 0);
+    if (now - lastTs < 3000) { alert('操作太频繁，请稍后重试'); return; }
+    if (!next || next.length < 6) { alert('新密码至少 6 位'); return; }
+    if (!/[A-Za-z]/.test(next) || !/\d/.test(next)) { alert('需同时包含字母与数字'); return; }
+    if (next === current) { alert('新密码不可与当前密码相同'); return; }
+    if (next !== confirmP) { alert('两次输入不一致'); return; }
+    const currentOk = users[u]?.password ? users[u].password === current : (current === 'admin123' || current === 'password');
+    if (!currentOk) { alert('当前密码不正确'); return; }
+    users[u] = { ...(users[u]||{role:'user'}), password: next };
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('pwd_change_ts', String(now));
+    hideWebChangePwd();
+    alert('密码已更新');
+  }
+  document.getElementById('webChangePwdModal').addEventListener('click',(e)=>{ if(e.target.id==='webChangePwdModal') hideWebChangePwd(); });
+  
 // 初始化
 loadProjects();
 </script>
+
+<script src="marzipano.js"></script>
+<script src="bg-pano.js"></script>
 
 </body>
 </html>

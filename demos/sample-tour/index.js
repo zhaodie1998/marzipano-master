@@ -15,6 +15,76 @@
  */
 'use strict';
 
+// Custom tile source for procedurally generated solid color tiles.
+function SolidColorSource(levels) {
+  this._levels = levels;
+}
+
+SolidColorSource.prototype._tileText = function(tile) {
+  var components = [];
+  if (tile.face) {
+    components.push("面:" + tile.face);
+  }
+  components.push("x:" + tile.x);
+  components.push("y:" + tile.y);
+  components.push("层级:" + tile.z);
+  return components.join(" ");
+};
+
+SolidColorSource.prototype._tileColor = function(tile) {
+  switch (tile.face) {
+    case 'u': return "#999";
+    case 'b': return "#aaa";
+    case 'd': return "#bbb";
+    case 'f': return "#ccc";
+    case 'r': return "#ddd";
+    case 'l': return "#eee";
+    default: return "#ddd";
+  }
+};
+
+SolidColorSource.prototype.loadAsset = function(stage, tile, done) {
+  var level = this._levels[tile.z];
+  var width = level ? level.tileSize : 512;
+  var height = width;
+
+  var text = this._tileText(tile);
+  var color = this._tileColor(tile);
+
+  // Create the canvas element.
+  var element = document.createElement("canvas");
+  element.width = width;
+  element.height = height;
+  var ctx = element.getContext("2d");
+
+  // Draw tile background.
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, width, height);
+
+  // Draw tile border.
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = "#000";
+  ctx.strokeRect(0, 0, width, height);
+
+  // Draw tile text.
+  ctx.fillStyle = "#000";
+  ctx.font = Math.max(12, width/20) + "px Arial";
+  ctx.textAlign=  "center";
+  ctx.fillText(text, width/2, height/2);
+
+  // Pass result into callback.
+  var timeout = setTimeout(function() {
+    var asset = new Marzipano.StaticAsset(element);
+    done(null, tile, asset);
+  }, 0);
+
+  // Return a cancelable.
+  return function cancel() {
+    clearTimeout(timeout);
+    done.apply(null, arguments);
+  };
+};
+
 (function() {
   var Marzipano = window.Marzipano;
   var bowser = window.bowser;
@@ -72,10 +142,11 @@
 
   // Create scenes.
   var scenes = data.scenes.map(function(data) {
-    var urlPrefix = "//www.marzipano.net/media";
-    var source = Marzipano.ImageUrlSource.fromString(
-      urlPrefix + "/" + data.id + "/{z}/{f}/{y}/{x}.jpg",
-      { cubeMapPreviewUrl: urlPrefix + "/" + data.id + "/preview.jpg" });
+    // var urlPrefix = "//www.marzipano.net/media";
+    // var source = Marzipano.ImageUrlSource.fromString(
+    //   urlPrefix + "/" + data.id + "/{z}/{f}/{y}/{x}.jpg",
+    //   { cubeMapPreviewUrl: urlPrefix + "/" + data.id + "/preview.jpg" });
+    var source = new SolidColorSource(data.levels);
     var geometry = new Marzipano.CubeGeometry(data.levels);
 
     var limiter = Marzipano.RectilinearView.limit.traditional(data.faceSize, 100*Math.PI/180, 120*Math.PI/180);
